@@ -28,8 +28,9 @@ import { usePermissions } from "@/hooks/usePermission";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", module: "dashboard" },
-  { href: "/dashboard/invoices/new", label: "Billing", module: "billing" },
-  { href: "/dashboard/lab-reports/new", label: "Reporting", module: "reporting" },
+  { href: "/dashboard/patient-tickets", label: "Patient Tickets", module: "billing" },
+  { href: "/dashboard/invoices", label: "Invoices", module: "billing" },
+  { href: "/dashboard/lab-reports", label: "Lab Reports", module: "reporting" },
   { href: "/dashboard/doctors", label: "Doctors", module: "doctors" },
   { href: "/dashboard/test-master", label: "Test Master", module: "testMaster" },
   { href: "/dashboard/employees", label: "Employees", module: "employees" },
