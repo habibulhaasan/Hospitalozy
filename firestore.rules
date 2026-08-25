@@ -1,0 +1,85 @@
+rules_version = '2';
+
+/**
+ * firestore.rules
+ * ------------------------------------------------------------------
+ * This is the REAL access-control boundary — the dashboard layout's
+ * nav-hiding and each page's <PermissionGate> are UX conveniences,
+ * not security. Anyone could open devtools and call the client SDK
+ * directly, bypassing every React component in this project; only
+ * rules enforced here (evaluated by Firestore's servers) actually
+ * stop that.
+ *
+ * Mirrors the same module keys as EmployeeComponent's permission
+ * grid (dashboard/billing/reporting/doctors/testMaster/employees/
+ * settings) by looking up the requesting user's own employee record.
+ * Deploy with: `firebase deploy --only firestore:rules`
+ * ------------------------------------------------------------------ */
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // The requesting user's own employee record, if one exists.
+    function callerEmployee() {
+      return get(/databases/$(database)/documents/employees/$(callerEmployeeId())).data;
+    }
+    function callerEmployeeId() {
+      return getEmployeeIdForUid(request.auth.uid);
+    }
+    // Firestore rules can't do arbitrary queries, so this assumes the
+    // employee doc ID matches the uid path convention you choose when
+    // creating it — simplest is to use the Auth uid AS the employee
+    // doc ID (setDoc(doc(db,"employees",uid), ...) instead of addDoc)
+    // so this lookup is a direct get(), not a query. Adjust
+    // lib/firestore/employees.js accordingly if you go this route.
+    function getEmployeeIdForUid(uid) {
+      return uid;
+    }
+
+    function hasPermission(module) {
+      return isSignedIn() &&
+        (callerEmployee().role == 'Admin' || callerEmployee().permissions[module] == true);
+    }
+
+    match /doctors/{docId} {
+      allow read: if isSignedIn();
+      allow write: if hasPermission('doctors');
+    }
+
+    match /tests/{docId} {
+      allow read: if isSignedIn();
+      allow write: if hasPermission('testMaster');
+    }
+
+    match /patients/{docId} {
+      // Any signed-in staff member can look up / register a patient —
+      // this is shared across Billing and Reporting, not gated to one
+      // module the way tests/doctors/employees are.
+      allow read, write: if isSignedIn();
+    }
+
+    match /invoices/{docId} {
+      allow read, write: if hasPermission('billing');
+    }
+
+    match /tickets/{docId} {
+      allow read, write: if hasPermission('billing');
+    }
+
+    match /reports/{docId} {
+      allow read, write: if hasPermission('reporting');
+    }
+
+    match /employees/{docId} {
+      // Everyone can read their OWN employee record (needed for
+      // AuthContext to load `employee` after sign-in); only
+      // Employees-module holders can read/write anyone else's, or
+      // create/edit/delete at all.
+      allow read: if isSignedIn() && (docId == request.auth.uid || hasPermission('employees'));
+      allow write: if hasPermission('employees');
+    }
+  }
+}
