@@ -7,10 +7,10 @@
  * ------------------------------------------------------------------ */
 import React from "react";
 
-export default function DoctorRow({ doctor, isConfirmingDelete, onEdit, onRequestDelete, onConfirmDelete, onCancelDelete }) {
+export default function DoctorRow({ doctor, isConfirmingDelete, onView, onEdit, onRequestDelete, onConfirmDelete, onCancelDelete }) {
   return (
     <tr className="border-b border-slate-100 align-top">
-      <td className="py-2 px-3 text-xs text-slate-400 whitespace-nowrap">{doctor.id}</td>
+      <td className="py-2 px-3 text-xs text-slate-500 font-mono whitespace-nowrap">{doctor.id}</td>
       <td className="py-2 px-3 font-medium">{doctor.name}</td>
       <td className="py-2 px-3">{doctor.specialty || "—"}</td>
       <td className="py-2 px-3">{doctor.designation || "—"}</td>
@@ -32,6 +32,9 @@ export default function DoctorRow({ doctor, isConfirmingDelete, onEdit, onReques
       </td>
       <td className="py-2 px-3">
         <div className="flex items-center gap-2">
+          <button onClick={() => onView(doctor)} className="text-xs text-slate-500 hover:text-slate-800">
+            View
+          </button>
           <button onClick={() => onEdit(doctor)} className="text-xs text-slate-500 hover:text-slate-800">
             Edit
           </button>

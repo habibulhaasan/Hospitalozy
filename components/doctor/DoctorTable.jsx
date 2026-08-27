@@ -13,6 +13,7 @@ export default function DoctorTable({
   doctors,
   filteredDoctors,
   confirmDeleteId,
+  onView,
   onEdit,
   onRequestDelete,
   onConfirmDelete,
@@ -36,14 +37,14 @@ export default function DoctorTable({
     <table className="w-full text-sm">
       <thead>
         <tr className="text-left text-xs text-slate-500 bg-slate-50 border-b border-slate-200">
-          <th className="py-2 px-3 font-medium">ID</th>
+          <th className="py-2 px-3 font-medium">Doctor ID</th>
           <th className="py-2 px-3 font-medium">Name</th>
           <th className="py-2 px-3 font-medium">Specialty</th>
           <th className="py-2 px-3 font-medium">Designation</th>
           <th className="py-2 px-3 font-medium">Qualifications</th>
           <th className="py-2 px-3 font-medium">Mobile</th>
           <th className="py-2 px-3 font-medium">Status</th>
-          <th className="py-2 px-3 font-medium w-32">Actions</th>
+          <th className="py-2 px-3 font-medium w-40">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -52,6 +53,7 @@ export default function DoctorTable({
             key={d.id}
             doctor={d}
             isConfirmingDelete={confirmDeleteId === d.id}
+            onView={onView}
             onEdit={onEdit}
             onRequestDelete={onRequestDelete}
             onConfirmDelete={onConfirmDelete}

@@ -16,6 +16,7 @@ const TILES = [
   { href: "/dashboard/invoices/new", label: "New Invoice", module: "billing" },
   { href: "/dashboard/patient-tickets/new", label: "New OPD Ticket", module: "billing" },
   { href: "/dashboard/lab-reports/new", label: "New Lab Report", module: "reporting" },
+  { href: "/dashboard/patients", label: "Patients", module: "dashboard" },
   { href: "/dashboard/doctors", label: "Doctors", module: "doctors" },
   { href: "/dashboard/test-master", label: "Test Master", module: "testMaster" },
   { href: "/dashboard/employees", label: "Employees", module: "employees" },

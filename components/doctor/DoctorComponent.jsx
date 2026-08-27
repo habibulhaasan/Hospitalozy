@@ -27,6 +27,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import DoctorFilters from "./DoctorFilters";
 import DoctorTable from "./DoctorTable";
 import DoctorModal from "./DoctorModal";
+import DoctorDetailModal from "./DoctorDetailModal";
 import { BLANK_DOCTOR, generateDoctorId } from "./doctorShape";
 
 export default function DoctorComponent({
@@ -43,6 +44,8 @@ export default function DoctorComponent({
   const [modalOpen, setModalOpen] = useState(false);
   const [draft, setDraft] = useState(BLANK_DOCTOR);
   const [saveStatus, setSaveStatus] = useState("");
+
+  const [viewDoctor, setViewDoctor] = useState(null); // read-only detail view — separate from the edit modal
 
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
@@ -63,7 +66,8 @@ export default function DoctorComponent({
         !term ||
         d.name.toLowerCase().includes(term) ||
         (d.mobile || "").includes(term) ||
-        (d.bmdc || "").toLowerCase().includes(term);
+        (d.bmdc || "").toLowerCase().includes(term) ||
+        (d.id || "").toLowerCase().includes(term);
       const matchesSpecialty = specialtyFilter === "All" || d.specialty === specialtyFilter;
       return matchesTerm && matchesSpecialty;
     });
@@ -137,6 +141,7 @@ export default function DoctorComponent({
             doctors={doctors}
             filteredDoctors={filteredDoctors}
             confirmDeleteId={confirmDeleteId}
+            onView={setViewDoctor}
             onEdit={openEditModal}
             onRequestDelete={setConfirmDeleteId}
             onConfirmDelete={handleDeleteDoctor}
@@ -144,6 +149,17 @@ export default function DoctorComponent({
           />
         </div>
       </div>
+
+      {viewDoctor && (
+        <DoctorDetailModal
+          doctor={viewDoctor}
+          onClose={() => setViewDoctor(null)}
+          onEdit={(doc) => {
+            openEditModal(doc);
+            setViewDoctor(null);
+          }}
+        />
+      )}
 
       {modalOpen && (
         <DoctorModal

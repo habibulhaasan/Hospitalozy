@@ -242,6 +242,80 @@ LOOKS gated but ISN'T.
 
 ---
 
+## Human-readable IDs (DOC-000001, PAT-000001, EMP-000001)
+
+Doctor, Patient, and Employee records now get a real sequential
+numeric ID with a prefix — not a Firestore auto-generated string, and
+critically, **not the same thing as a Firebase Auth UID** for
+employees.
+
+`lib/firestore/counters.js` is the one place this happens: one
+`counters/{entityName}` document per entity type, incremented inside
+a `runTransaction` so two people registering a patient at the same
+moment can't both get `PAT-000042`.
+
+- **Doctors and Patients** — the generated ID (`DOC-000001`,
+  `PAT-000001`) *is* the Firestore document ID directly (`setDoc`
+  instead of `addDoc`). Neither has an Auth account, so there's no
+  UID to keep separate from anything.
+- **Employees** — trickier, because an employee's Firestore doc ID
+  needs to be their Auth `uid` once they have a login (see the
+  existing note on this in `lib/firestore/employees.js` and
+  `firestore.rules`). So `employeeId` (`EMP-000001`) is a **field**
+  on the document, generated once at creation and carried forward
+  unchanged even if the underlying doc ID later migrates from an
+  auto-ID to a uid-keyed one. `EmployeeComponent`'s list, detail view,
+  and search all use `employeeId` — never `id` or `uid` — for
+  anything shown to a person.
+
+If you're adding a new entity type that needs the same treatment,
+`getNextSequentialId(prefix, counterName)` in `counters.js` is the
+function to call — it's generic, not specific to any one entity.
+
+## "View Detail" on Doctor, Employee, and Patient lists
+
+All three list views now have a **View** action distinct from Edit —
+clicking a row's name opens a read-only detail panel
+(`DoctorDetailModal`, the inline detail view in `EmployeeComponent`,
+`PatientDetailModal`), with its own "Edit" button if you actually
+need to change something. This is deliberate, not just extra clicks:
+a person checking someone's details shouldn't be one accidental
+keystroke away from changing them, which is exactly what happens if
+"click a row" and "open the editable form" are the same action.
+
+## The new Patient list (`components/patient/`)
+
+Patients previously had no screen of their own — only ever created or
+looked up as a side effect of billing/reporting someone
+(`InvoiceComponent`'s `PatientPanel`, etc.). `components/patient/`
+follows the same decomposition pattern as Doctor (filters / row /
+table / detail modal / edit modal / orchestrator), backed by two new
+functions in `lib/firestore/patients.js` (`loadPatients`,
+`searchPatients`).
+
+One deliberate omission: **no Delete**. A patient record is referenced
+by invoices, lab reports, and OPD tickets — hard-deleting it would
+either orphan that history or require cascading deletes across three
+other collections, neither of which this component should decide
+silently. If a patient record genuinely needs to be deactivated,
+add a `status` field and a toggle (same pattern as Doctor's
+Active/Inactive) rather than a real delete.
+
+There's also no "create new patient" form here — new patients are
+only ever registered from Invoice/LabReport/PatientBilling's existing
+patient-registration flow, so this screen's edit modal only ever
+updates an existing record. Search is server-side (debounced,
+re-queries Firestore on each change) rather than the client-side
+in-memory filter Doctor/Employee use, since a hospital's patient list
+can grow much larger than its doctor or staff roster.
+
+`firestore.rules` and the dashboard nav both treat `/patients` the
+same way: open to any signed-in employee, not gated to one specific
+permission module (patient lookup is shared across Billing and
+Reporting) — the Patients nav link uses the `dashboard` permission key
+as a stand-in for "any assigned role," since every `ROLE_PRESET` in
+`EmployeeComponent` sets that to `true`.
+
 ## Firestore indexes (`firestore.indexes.json`)
 
 Firestore auto-creates single-field indexes, but a query that combines

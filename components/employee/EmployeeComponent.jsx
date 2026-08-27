@@ -61,7 +61,8 @@ const BLANK_PERMISSIONS = { dashboard: true, billing: false, reporting: false, d
 
 const BLANK_EMPLOYEE = {
   id: "",
-  uid: "", // Firebase Auth UID, set once a login account exists
+  uid: "", // Firebase Auth UID, set once a login account exists — internal, never shown to a person
+  employeeId: "", // EMP-000001-style, human-facing — generated on first save (see lib/firestore/employees.js), NOT the same thing as uid or the Firestore doc id
   name: "",
   designation: "",
   department: "",
@@ -213,6 +214,8 @@ export default function EmployeeComponent({
   const [draft, setDraft] = useState(BLANK_EMPLOYEE);
   const [saveStatus, setSaveStatus] = useState(""); // "", "saving", "error"
 
+  const [viewEmployee, setViewEmployee] = useState(null); // read-only detail view — separate from the edit modal
+
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const [createAccount, setCreateAccount] = useState(false);
@@ -239,7 +242,8 @@ export default function EmployeeComponent({
         e.name.toLowerCase().includes(term) ||
         (e.mobile || "").includes(term) ||
         (e.email || "").toLowerCase().includes(term) ||
-        (e.designation || "").toLowerCase().includes(term);
+        (e.designation || "").toLowerCase().includes(term) ||
+        (e.employeeId || "").toLowerCase().includes(term);
       const matchesDept = departmentFilter === "All" || e.department === departmentFilter;
       const matchesStatus = statusFilter === "All" || e.status === statusFilter;
       return matchesTerm && matchesDept && matchesStatus;
@@ -399,7 +403,7 @@ export default function EmployeeComponent({
             <table className="w-full text-sm min-w-[950px]">
               <thead>
                 <tr className="text-left text-xs text-slate-500 bg-slate-50 border-b border-slate-200">
-                  <th className="py-2 px-3 font-medium">ID</th>
+                  <th className="py-2 px-3 font-medium">Employee ID</th>
                   <th className="py-2 px-3 font-medium">Name</th>
                   <th className="py-2 px-3 font-medium">Designation</th>
                   <th className="py-2 px-3 font-medium">Department</th>
@@ -407,13 +411,13 @@ export default function EmployeeComponent({
                   <th className="py-2 px-3 font-medium">Mobile</th>
                   <th className="py-2 px-3 font-medium">Login Access</th>
                   <th className="py-2 px-3 font-medium">Status</th>
-                  <th className="py-2 px-3 font-medium w-32">Actions</th>
+                  <th className="py-2 px-3 font-medium w-40">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredEmployees.map((e) => (
                   <tr key={e.id} className={`border-b border-slate-100 align-top ${e.status !== "Active" ? "opacity-60" : ""}`}>
-                    <td className="py-2 px-3 text-xs text-slate-400 whitespace-nowrap">{e.id}</td>
+                    <td className="py-2 px-3 text-xs text-slate-500 font-mono whitespace-nowrap">{e.employeeId || "—"}</td>
                     <td className="py-2 px-3 font-medium">{e.name}</td>
                     <td className="py-2 px-3">{e.designation || "—"}</td>
                     <td className="py-2 px-3">{e.department || "—"}</td>
@@ -435,6 +439,7 @@ export default function EmployeeComponent({
                     </td>
                     <td className="py-2 px-3">
                       <div className="flex items-center gap-2">
+                        <button onClick={() => setViewEmployee(e)} className="text-xs text-slate-500 hover:text-slate-800">View</button>
                         <button onClick={() => openEditModal(e)} className="text-xs text-slate-500 hover:text-slate-800">Edit</button>
                         {confirmDeleteId === e.id ? (
                           <span className="flex items-center gap-1 text-xs bg-red-50 border border-red-200 rounded px-1.5 py-0.5 whitespace-nowrap">
@@ -454,6 +459,67 @@ export default function EmployeeComponent({
         </div>
       </div>
 
+      {/* ============ READ-ONLY DETAIL VIEW ============ *
+       * Separate from the edit modal on purpose — clicking a row to
+       * check someone's details shouldn't put you one accidental
+       * keystroke away from changing them. */}
+      {viewEmployee && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setViewEmployee(null);
+          }}
+        >
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200">
+              <h2 className="text-sm font-semibold">{viewEmployee.name}</h2>
+              <button onClick={() => setViewEmployee(null)} className="text-slate-400 hover:text-slate-700">✕</button>
+            </div>
+            <div className="p-5 space-y-2 text-sm">
+              <div className="text-xs text-slate-400 mb-2">Employee ID: <span className="font-mono text-slate-600">{viewEmployee.employeeId || "—"}</span></div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                <div><span className="text-slate-500">Designation:</span> <b>{viewEmployee.designation || "—"}</b></div>
+                <div><span className="text-slate-500">Department:</span> <b>{viewEmployee.department || "—"}</b></div>
+                <div><span className="text-slate-500">Role:</span> <b>{viewEmployee.role || "—"}</b></div>
+                <div><span className="text-slate-500">Status:</span> <b>{viewEmployee.status || "Active"}</b></div>
+                <div><span className="text-slate-500">Mobile:</span> <b>{viewEmployee.mobile || "—"}</b></div>
+                <div><span className="text-slate-500">Email:</span> <b>{viewEmployee.email || "—"}</b></div>
+                <div><span className="text-slate-500">Gender:</span> <b>{viewEmployee.gender || "—"}</b></div>
+                <div><span className="text-slate-500">Blood Group:</span> <b>{viewEmployee.bloodGroup || "—"}</b></div>
+                <div><span className="text-slate-500">NID:</span> <b>{viewEmployee.nid || "—"}</b></div>
+                <div><span className="text-slate-500">Joining Date:</span> <b>{viewEmployee.joiningDate || "—"}</b></div>
+                <div className="col-span-2"><span className="text-slate-500">Address:</span> <b>{viewEmployee.address || "—"}</b></div>
+                <div><span className="text-slate-500">Emergency Contact:</span> <b>{viewEmployee.emergencyContactName || "—"}</b></div>
+                <div><span className="text-slate-500">Emergency Phone:</span> <b>{viewEmployee.emergencyContactPhone || "—"}</b></div>
+                <div><span className="text-slate-500">Available Time:</span> <b>{viewEmployee.availableTime || "—"}</b></div>
+                <div>
+                  <span className="text-slate-500">Login Access:</span>{" "}
+                  <b>{viewEmployee.uid ? (viewEmployee.status === "Blocked" ? "Blocked" : "Active") : "No Account"}</b>
+                </div>
+              </div>
+              {viewEmployee.notes && (
+                <div className="pt-2 border-t border-slate-100 mt-2">
+                  <span className="text-slate-500 text-xs">Notes:</span>
+                  <p className="text-sm">{viewEmployee.notes}</p>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-2 px-5 py-3 border-t border-slate-200">
+              <button onClick={() => setViewEmployee(null)} className="text-sm border border-slate-300 text-slate-600 px-3 py-1.5 rounded">Close</button>
+              <button
+                onClick={() => {
+                  openEditModal(viewEmployee);
+                  setViewEmployee(null);
+                }}
+                className="text-sm bg-slate-800 text-white px-4 py-1.5 rounded"
+              >
+                Edit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ============ ADD / EDIT MODAL ============ */}
       {modalOpen && (
         <div
@@ -469,7 +535,7 @@ export default function EmployeeComponent({
             </div>
 
             <div className="p-5 space-y-4">
-              {draft.id && <div className="text-xs text-slate-400">Employee ID: <span className="font-mono">{draft.id}</span></div>}
+              {draft.employeeId && <div className="text-xs text-slate-400">Employee ID: <span className="font-mono">{draft.employeeId}</span></div>}
 
               {/* ---- Basic info ---- */}
               <div>
