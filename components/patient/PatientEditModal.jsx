@@ -1,4 +1,4 @@
-/**
+﻿/**
  * components/patient/PatientEditModal.jsx
  * ------------------------------------------------------------------
  * Update form — no "create" path here on purpose. New patients are
@@ -21,12 +21,12 @@ export default function PatientEditModal({ draft, setDraft, saveStatus, onSave, 
     >
       <div className="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200">
-          <h2 className="text-sm font-semibold">Edit Patient</h2>
+          <h2 className="text-sm font-semibold">{draft.patientId ? "Edit Patient" : "Add New Patient"}</h2>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-700">✕</button>
         </div>
 
         <div className="p-5 space-y-3">
-          <div className="text-xs text-slate-400">Patient ID: <span className="font-mono">{draft.patientId}</span></div>
+          <div className="text-xs text-slate-400">{draft.patientId ? <>Patient ID: <span className="font-mono">{draft.patientId}</span></> : <span>Patient ID: Auto-assigned on save</span>}</div>
 
           <div>
             <label className="text-xs text-slate-500 block mb-1">Name *</label>
@@ -124,7 +124,7 @@ export default function PatientEditModal({ draft, setDraft, saveStatus, onSave, 
             disabled={!draft.name.trim() || saveStatus === "saving"}
             className="text-sm bg-slate-800 disabled:bg-slate-300 text-white px-4 py-1.5 rounded"
           >
-            {saveStatus === "saving" ? "Saving…" : "Save Changes"}
+            {saveStatus === "saving" ? "Saving…" : draft.patientId ? "Save Changes" : "Save Patient"}
           </button>
         </div>
       </div>

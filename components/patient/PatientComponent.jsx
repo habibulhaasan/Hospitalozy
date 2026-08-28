@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * components/patient/PatientComponent.jsx
@@ -106,8 +106,13 @@ export default function PatientComponent({
     if (!editDraft.name.trim()) return;
     setSaveStatus("saving");
     try {
-      await onSavePatient(editDraft);
-      setPatients((prev) => prev.map((p) => (p.patientId === editDraft.patientId ? editDraft : p)));
+      const savedId = await onSavePatient(editDraft);
+      const savedRecord = { ...editDraft, patientId: savedId };
+      if (editDraft.patientId) {
+        setPatients((prev) => prev.map((p) => (p.patientId === savedId ? savedRecord : p)));
+      } else {
+        setPatients((prev) => [savedRecord, ...prev]);
+      }
       setEditDraft(null);
     } catch (err) {
       console.error(err);
@@ -118,12 +123,23 @@ export default function PatientComponent({
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800 p-4">
       <div className="max-w-5xl mx-auto space-y-4">
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <h1 className="text-base font-semibold">Patients</h1>
-          <p className="text-xs text-slate-500">
-            {patients.length} patient{patients.length !== 1 ? "s" : ""} {search ? "found" : "on record"}
-            {searching && " — searching…"}
-          </p>
+        <div className="bg-white rounded-lg border border-slate-200 p-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-base font-semibold">Patients</h1>
+            <p className="text-xs text-slate-500">
+              {patients.length} patient{patients.length !== 1 ? "s" : ""} {search ? "found" : "on record"}
+              {searching && " — searching…"}
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setEditDraft({ ...BLANK_PATIENT });
+              setSaveStatus("");
+            }}
+            className="text-sm bg-slate-800 text-white px-4 py-1.5 rounded hover:bg-slate-700 transition-colors"
+          >
+            + Add Patient
+          </button>
         </div>
 
         <PatientFilters search={search} onSearchChange={setSearch} />
