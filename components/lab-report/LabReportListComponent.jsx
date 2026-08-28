@@ -198,10 +198,12 @@ export default function LabReportListComponent({
         @page { size: A4; margin: 0; }
       `}</style>
 
+
       {/* ============ LIST / SEARCH UI (hidden on print) ============ */}
       <div className="no-print max-w-5xl mx-auto p-4 space-y-4">
         <div className="bg-white rounded-lg border border-slate-200 p-4">
           <h1 className="text-base font-semibold mb-3">Lab Reports</h1>
+          
           <div className="flex flex-wrap gap-2 items-center">
             <input
               className="border rounded px-2 py-1.5 text-sm flex-1 min-w-[220px]"

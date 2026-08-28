@@ -283,6 +283,37 @@ a person checking someone's details shouldn't be one accidental
 keystroke away from changing them, which is exactly what happens if
 "click a row" and "open the editable form" are the same action.
 
+## Finding a patient via Invoice/OPD Ticket on Lab Reporting
+
+A lab report's patient is almost always someone already billed —
+either an itemized Invoice or an OPD Ticket — so retyping their name,
+age, and referring doctor by hand on the report is redundant work a
+technologist shouldn't have to do twice. `LabReportComponent` now has
+a search dropdown, right above the manual Reg/Patient ID field:
+**"Find Patient via Invoice No. or OPD Ticket No."** — type an invoice
+number, ticket number, patient name, or mobile, and pick the right
+result to auto-fill Reg No., Name, Sex, Age, Referred By, and
+Collection Date in one click.
+
+- `components/shared/AsyncSearchableSelect.jsx` — a new, generic
+  reusable primitive: same "type to filter" feel as `SearchableSelect`,
+  but backed by an async search function instead of a fixed in-memory
+  array (debounced 300ms). Anywhere else in this project that needs
+  "search a backend, pick a result" can reuse this instead of writing
+  another one-off combobox.
+- `lib/firestore/billingSources.js` — composes the *existing*
+  `searchInvoices` and `searchTickets` (already built for the Invoice
+  List and Patient Ticket List screens) into one unified result list,
+  rather than duplicating either's query logic. No new Firestore index
+  needed — called with only `{ text }`, it hits the same
+  `orderBy("billDateTime")`-only query path those two functions
+  already use for their default (no-filter) case.
+
+The old manual Reg/Patient ID + Lookup fields are still there
+underneath, unchanged — this is an additional, faster path for the
+common case, not a replacement for the "I already know the Patient
+ID" case.
+
 ## The new Patient list (`components/patient/`)
 
 Patients previously had no screen of their own — only ever created or

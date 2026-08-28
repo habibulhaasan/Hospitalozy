@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { REPORTABLE_PARAMETERS as TEST_CATALOG } from "@/data/reportableParameters";
+import AsyncSearchableSelect from "@/components/shared/AsyncSearchableSelect";
 
 /* TEST_CATALOG now imported from data/reportableParameters.js — the
  * canonical source also used by TestMasterComponent's price seed
@@ -193,6 +194,17 @@ const DEFAULT_PATIENT = {
  *     Only fields present on the returned object are applied — leave
  *     a field out (or return null) to keep whatever the user typed.
  *
+ *   onSearchBillingSource(text) => the usual way a report actually
+ *     gets started: search by Invoice No., OPD Ticket No., patient
+ *     name, or mobile, and pick the right one from a dropdown instead
+ *     of retyping patient details a technologist already entered at
+ *     billing. Return an array shaped like
+ *     lib/firestore/billingSources.js::searchBillingSources's output
+ *     — each result populates regNo/name/sex/age/referredBy/
+ *     collectionDate in one click. Leave unset and this search box
+ *     just doesn't return anything, falling back to the manual
+ *     Reg/Patient ID + Lookup flow below it.
+ *
  *   onSaveReport({ hospitalName, patient, technologist, pathologist, tests })
  *     => persist the report however you like. Awaited; throw to
  *     surface a "Save failed" state.
@@ -205,6 +217,7 @@ const DEFAULT_PATIENT = {
 export default function LabReportComponent({
   onLookupPatient = async () => null,
   onLookupInvoice = async () => null,
+  onSearchBillingSource = async () => [],
   onSaveReport = async (payload) => {
     console.log("onSaveReport not wired up yet — payload:", payload);
   },
@@ -369,6 +382,24 @@ export default function LabReportComponent({
     }
   }
 
+  function handleSelectBillingSource(item) {
+    const ageParts = [
+      item.ageY && `${item.ageY}Y`,
+      item.ageM && `${item.ageM}M`,
+      item.ageD && `${item.ageD}D`,
+    ].filter(Boolean);
+    setPatient((prev) => ({
+      ...prev,
+      regNo: item.patientId || prev.regNo,
+      name: item.patientName || prev.name,
+      sex: item.gender === "Female" ? "F" : item.gender === "Male" ? "M" : prev.sex,
+      age: ageParts.length ? ageParts.join(" ") : prev.age,
+      referredBy: item.referredBy || prev.referredBy,
+      collectionDate: item.collectionDate || prev.collectionDate,
+    }));
+    setLookupStatus("found");
+  }
+
   async function handleSaveReport() {
     setSaveStatus("saving");
     try {
@@ -450,6 +481,28 @@ export default function LabReportComponent({
                 mm blank space at top
               </span>
             )}
+          </div>
+          <div className="mb-3">
+            <label className="text-xs text-slate-500 block mb-1">
+              Find Patient via Invoice No. or OPD Ticket No.
+            </label>
+            <AsyncSearchableSelect
+              onSearch={onSearchBillingSource}
+              onSelect={handleSelectBillingSource}
+              placeholder="Search by Invoice No., Ticket No., patient name, or mobile…"
+              emptyHint="No matching invoice or OPD ticket found."
+              renderItem={(item) => (
+                <div className="flex justify-between gap-2">
+                  <span>
+                    {item.refNo} — {item.patientName || "Unknown patient"}
+                  </span>
+                  <span className="text-slate-400 text-xs whitespace-nowrap">{item.source}</span>
+                </div>
+              )}
+            />
+            <p className="text-[10px] text-slate-400 mt-1">
+              Or enter the Reg / Patient ID directly below if you already know it.
+            </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <input

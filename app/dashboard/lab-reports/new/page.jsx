@@ -16,6 +16,7 @@ import LabReportComponent from "@/components/lab-report/LabReportComponent";
 import { lookupPatientByIdOrMobile, savePatient } from "@/lib/firestore/patients";
 import { loadActiveDoctorNames } from "@/lib/firestore/doctors";
 import { saveReport, lookupInvoiceForPatient } from "@/lib/firestore/reports";
+import { searchBillingSources } from "@/lib/firestore/billingSources";
 
 export default function NewLabReportPage() {
   return (
@@ -23,6 +24,7 @@ export default function NewLabReportPage() {
       <LabReportComponent
         onLookupPatient={lookupPatientByIdOrMobile}
         onLookupInvoice={lookupInvoiceForPatient}
+        onSearchBillingSource={searchBillingSources}
         onSaveReport={saveReport}
         onLoadDoctors={loadActiveDoctorNames}
         onLoadTechnologists={loadActiveDoctorNames}
