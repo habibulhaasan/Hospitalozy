@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * components/shared/AsyncSearchableSelect.jsx
@@ -83,9 +83,9 @@ export default function AsyncSearchableSelect({ onSearch, onSelect, renderItem, 
             <div className="px-2 py-1.5 text-xs text-slate-400">{emptyHint || "No match found."}</div>
           )}
           {!loading &&
-            results.map((item) => (
+            results.map((item, idx) => (
               <div
-                key={item.key}
+                key={item.key || item.patientId || item.id || idx}
                 onMouseDown={(e) => {
                   e.preventDefault();
                   handleSelect(item);

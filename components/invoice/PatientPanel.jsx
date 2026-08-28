@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * components/invoice/PatientPanel.jsx
@@ -12,6 +12,7 @@
  * ------------------------------------------------------------------ */
 import React from "react";
 import SearchableSelect from "@/components/shared/SearchableSelect";
+import AsyncSearchableSelect from "@/components/shared/AsyncSearchableSelect";
 
 export default function PatientPanel({
   patient,
@@ -22,6 +23,8 @@ export default function PatientPanel({
   setLookupQuery,
   lookupStatus,
   onLookupPatient,
+  onSearchPatients,
+  onSelectPatient,
   doctorOptions,
   savePatientStatus,
   onSavePatient,
@@ -45,23 +48,50 @@ export default function PatientPanel({
 
       {patientMode === "existing" && (
         <div className="mb-3">
-          <div className="flex gap-1.5">
-            <input
-              className="border rounded px-2 py-1.5 text-sm flex-1"
-              placeholder="Search by Patient ID, Mobile Number, or NID/BRN"
-              value={lookupQuery}
-              onChange={(e) => setLookupQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && onLookupPatient()}
-            />
-            <button
-              onClick={onLookupPatient}
-              disabled={!lookupQuery.trim() || lookupStatus === "loading"}
-              className="text-xs px-3 rounded border border-slate-300 bg-slate-50 disabled:opacity-50 whitespace-nowrap"
-            >
-              {lookupStatus === "loading" ? "Searching…" : "Search"}
-            </button>
-          </div>
-          {lookupStatus === "found" && <p className="text-xs text-emerald-600 mt-1">Patient found — details filled in below.</p>}
+          <label className="text-xs text-slate-500 block mb-1">
+            Search Existing Patient
+          </label>
+          <AsyncSearchableSelect
+            onSearch={async (query) => {
+              if (!onSearchPatients) return [];
+              const results = await onSearchPatients(query);
+              return Array.isArray(results) ? results : [];
+            }}
+            onSelect={(selectedItem) => {
+              if (onSelectPatient) {
+                onSelectPatient(selectedItem);
+              }
+            }}
+            placeholder="Type Patient ID, Name, Mobile, or NID to search…"
+            emptyHint="No matching patient found."
+            renderItem={(item) => {
+              const ageParts = [
+                item.ageY ? `${item.ageY}Y` : '',
+                item.ageM ? `${item.ageM}M` : '',
+                item.ageD ? `${item.ageD}D` : ''
+              ].filter(Boolean).join(' ') || "—";
+
+              return (
+                <div className="flex justify-between items-center gap-2 py-0.5">
+                  <div className="flex flex-col">
+                    <span className="font-medium text-slate-800">
+                      {item.name || "Unnamed Patient"}{" "}
+                      <span className="text-xs text-slate-400 font-normal">({item.patientId})</span>
+                    </span>
+                    <span className="text-xs text-slate-500">
+                      Age: {ageParts} | Mobile: {item.mobile || "—"}
+                    </span>
+                  </div>
+                  {item.gender && (
+                    <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono uppercase">
+                      {item.gender}
+                    </span>
+                  )}
+                </div>
+              );
+            }}
+          />
+          {lookupStatus === "found" && <p className="text-xs text-emerald-600 mt-1">Patient selected — details filled in below.</p>}
           {lookupStatus === "not-found" && <p className="text-xs text-amber-600 mt-1">No patient found — switch to "New Patient" to register them.</p>}
           {lookupStatus === "error" && <p className="text-xs text-red-600 mt-1">Lookup failed — check the connection and try again.</p>}
         </div>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * components/invoice/InvoiceComponent.jsx
@@ -28,6 +28,7 @@ import { calcAgeFromDOB } from "@/lib/format";
 
 export default function InvoiceComponent({
   onLookupPatientByIdOrMobile = async () => null,
+  onSearchPatients = async () => [],
   onSavePatient = async (patientData) => patientData.patientId || `P-${Date.now().toString().slice(-8)}`,
   onLoadDoctors = async () => [],
   onSaveInvoice = async (payload) => {
@@ -194,6 +195,11 @@ export default function InvoiceComponent({
           setLookupQuery={setLookupQuery}
           lookupStatus={lookupStatus}
           onLookupPatient={handleLookupPatient}
+          onSearchPatients={onSearchPatients}
+          onSelectPatient={(p) => {
+             setPatient((prev) => ({ ...prev, ...p }));
+             setLookupStatus("found");
+          }}
           doctorOptions={doctorOptions}
           savePatientStatus={savePatientStatus}
           onSavePatient={handleSavePatient}

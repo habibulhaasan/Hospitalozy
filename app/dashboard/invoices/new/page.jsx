@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * app/dashboard/invoices/new/page.jsx
@@ -11,7 +11,7 @@
  * ------------------------------------------------------------------ */
 import PermissionGate from "@/components/shared/PermissionGate";
 import InvoiceComponent from "@/components/invoice/InvoiceComponent";
-import { lookupPatientByIdOrMobile, savePatient } from "@/lib/firestore/patients";
+import { lookupPatientByIdOrMobile, savePatient, searchPatients } from "@/lib/firestore/patients";
 import { loadActiveDoctorNames } from "@/lib/firestore/doctors";
 import { saveInvoice } from "@/lib/firestore/invoices";
 
@@ -20,6 +20,7 @@ export default function NewInvoicePage() {
     <PermissionGate module="billing">
       <InvoiceComponent
         onLookupPatientByIdOrMobile={lookupPatientByIdOrMobile}
+        onSearchPatients={searchPatients}
         onSavePatient={savePatient}
         onLoadDoctors={loadActiveDoctorNames}
         onSaveInvoice={saveInvoice}
