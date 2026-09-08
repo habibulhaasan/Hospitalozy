@@ -14,7 +14,8 @@
 import PermissionGate from "@/components/shared/PermissionGate";
 import LabReportComponent from "@/components/lab-report/LabReportComponent";
 import { lookupPatientByIdOrMobile, savePatient } from "@/lib/firestore/patients";
-import { loadActiveDoctorNames } from "@/lib/firestore/doctors";
+import { loadActiveDoctorNames, loadActivePathologistNames } from "@/lib/firestore/doctors";
+import { loadMedicalTechnologistNames } from "@/lib/firestore/employees";
 import { saveReport, lookupInvoiceForPatient } from "@/lib/firestore/reports";
 import { searchBillingSources } from "@/lib/firestore/billingSources";
 
@@ -27,8 +28,8 @@ export default function NewLabReportPage() {
         onSearchBillingSource={searchBillingSources}
         onSaveReport={saveReport}
         onLoadDoctors={loadActiveDoctorNames}
-        onLoadTechnologists={loadActiveDoctorNames}
-        onLoadPathologists={loadActiveDoctorNames}
+        onLoadTechnologists={loadMedicalTechnologistNames}
+        onLoadPathologists={loadActivePathologistNames}
       />
     </PermissionGate>
   );

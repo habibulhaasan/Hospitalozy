@@ -21,6 +21,21 @@ const DEPARTMENTS = [
   "Ambulance / Transport",
 ];
 
+const STAFF_DESIGNATIONS = [
+  "Manager",
+  "Administrator",
+  "Accountant",
+  "Receptionist",
+  "Medical Technologist (Laboratory)",
+  "Radiographer",
+  "Pharmacist",
+  "Nurse",
+  "IT Officer",
+  "Security Guard",
+  "Driver",
+  "Cleaner",
+];
+
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
 /* Modules an employee can be given access to — maps to the other
@@ -559,7 +574,7 @@ export default function EmployeeComponent({
                 <div className="grid grid-cols-3 gap-3 mb-3">
                   <div>
                     <label className="text-xs text-slate-500 block mb-1">Designation</label>
-                    <input className="border rounded px-2 py-1.5 text-sm w-full" value={draft.designation} onChange={(e) => setDraft({ ...draft, designation: e.target.value })} />
+                    <SearchableSelect value={draft.designation} onChange={(v) => setDraft({ ...draft, designation: v })} options={STAFF_DESIGNATIONS} placeholder="Search or type" />
                   </div>
                   <div>
                     <label className="text-xs text-slate-500 block mb-1">Department</label>

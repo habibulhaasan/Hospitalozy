@@ -82,4 +82,19 @@ export const STAFF_DEPARTMENTS = [
   "Ambulance / Transport",
 ];
 
+export const STAFF_DESIGNATIONS = [
+  "Manager",
+  "Administrator",
+  "Accountant",
+  "Receptionist",
+  "Medical Technologist (Laboratory)",
+  "Radiographer",
+  "Pharmacist",
+  "Nurse",
+  "IT Officer",
+  "Security Guard",
+  "Driver",
+  "Cleaner",
+];
+
 export const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
