@@ -1,10 +1,4 @@
-/**
- * components/patient/PatientTable.jsx
- * ------------------------------------------------------------------
- * Loading/error/empty states plus the actual table, built from
- * PatientRow.
- * ------------------------------------------------------------------ */
-import React from "react";
+﻿import React from "react";
 import PatientRow from "./PatientRow";
 
 export default function PatientTable({ loadStatus, patients, filteredPatients, onView, onEdit }) {
@@ -39,8 +33,8 @@ export default function PatientTable({ loadStatus, patients, filteredPatients, o
         </tr>
       </thead>
       <tbody>
-        {filteredPatients.map((p) => (
-          <PatientRow key={p.patientId} patient={p} onView={onView} onEdit={onEdit} />
+        {filteredPatients.map((p, idx) => (
+          <PatientRow key={p.patientId || p.id || p.docId || idx} patient={p} onView={onView} onEdit={onEdit} />
         ))}
       </tbody>
     </table>

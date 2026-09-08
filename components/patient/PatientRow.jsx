@@ -1,16 +1,11 @@
-/**
- * components/patient/PatientRow.jsx
- * ------------------------------------------------------------------
- * One row — View opens the read-only detail modal, Edit opens the
- * update form. No Delete button here on purpose (see PatientComponent's
- * doc comment).
- * ------------------------------------------------------------------ */
-import React from "react";
+﻿import React from "react";
 
 export default function PatientRow({ patient, onView, onEdit }) {
+  const displayId = patient.patientId || patient.id || patient.docId || "—";
+
   return (
     <tr className="border-b border-slate-100 align-top">
-      <td className="py-2 px-3 text-xs text-slate-500 font-mono whitespace-nowrap">{patient.patientId}</td>
+      <td className="py-2 px-3 text-xs text-slate-500 font-mono whitespace-nowrap">{displayId}</td>
       <td className="py-2 px-3 font-medium">{patient.name}</td>
       <td className="py-2 px-3 whitespace-nowrap">{patient.mobile || "—"}</td>
       <td className="py-2 px-3">

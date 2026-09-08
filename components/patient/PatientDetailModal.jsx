@@ -1,12 +1,8 @@
-/**
- * components/patient/PatientDetailModal.jsx
- * ------------------------------------------------------------------
- * Read-only detail view — same "separate from Edit" reasoning as
- * DoctorDetailModal and Employee's view modal.
- * ------------------------------------------------------------------ */
-import React from "react";
+﻿import React from "react";
 
 export default function PatientDetailModal({ patient, onClose, onEdit }) {
+  const displayId = patient.patientId || patient.id || patient.docId || "—";
+
   return (
     <div
       className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50"
@@ -21,7 +17,7 @@ export default function PatientDetailModal({ patient, onClose, onEdit }) {
         </div>
 
         <div className="p-5 space-y-2 text-sm">
-          <div className="text-xs text-slate-400 mb-2">Patient ID: <span className="font-mono text-slate-600">{patient.patientId}</span></div>
+          <div className="text-xs text-slate-400 mb-2">Patient ID: <span className="font-mono text-slate-600">{displayId}</span></div>
 
           <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
             <div><span className="text-slate-500">Mobile:</span> <b>{patient.mobile || "—"}</b></div>
