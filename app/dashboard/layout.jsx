@@ -21,30 +21,18 @@
  * ultimately by your Firestore security rules — a hidden nav link is
  * not access control.
  * ------------------------------------------------------------------ */
-import { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { usePermissions } from "@/hooks/usePermission";
-
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", module: "dashboard" },
-  // "dashboard" is effectively "any assigned role" — every ROLE_PRESET
-  // in EmployeeComponent sets it true, which matches firestore.rules
-  // treating /patients/{docId} as open to any signed-in employee
-  // rather than gated to one specific module.
-  { href: "/dashboard/patients", label: "Patients", module: "dashboard" },
-  { href: "/dashboard/invoices/new", label: "Billing", module: "billing" },
-  { href: "/dashboard/lab-reports/new", label: "Reporting", module: "reporting" },
-  { href: "/dashboard/doctors", label: "Doctors", module: "doctors" },
-  { href: "/dashboard/test-master", label: "Test Master", module: "testMaster" },
-  { href: "/dashboard/employees", label: "Employees", module: "employees" },
-  { href: "/dashboard/accounting", label: "Accounting", module: "billing" },
-];
+import SidebarNav from "@/components/shared/SidebarNav";
+import { useQuickAccess } from "@/hooks/useQuickAccess";
 
 export default function DashboardLayout({ children }) {
   const router = useRouter();
   const { user, employee, loading, signOut } = useAuth();
-  const permissions = usePermissions();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const { quickAccessLinks } = useQuickAccess();
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
@@ -54,24 +42,47 @@ export default function DashboardLayout({ children }) {
   if (!user) return null; // redirect effect above is about to fire
 
   return (
-    <div className="min-h-screen bg-slate-100">
-      <nav className="bg-white border-b border-slate-200 px-4 py-2 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <span className="font-semibold text-sm text-slate-800">Hospitalozy</span>
-          {NAV_ITEMS.filter((item) => permissions[item.module]).map((item) => (
-            <a key={item.href} href={item.href} className="text-sm text-slate-600 hover:text-slate-900">
-              {item.label}
-            </a>
-          ))}
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-slate-500">{employee?.name || user.email}</span>
-          <button onClick={() => signOut().then(() => router.push("/login"))} className="text-xs text-slate-500 hover:text-red-600 underline">
-            Sign Out
-          </button>
-        </div>
-      </nav>
-      <main>{children}</main>
+    <div className="flex h-screen bg-slate-100 overflow-hidden">
+      <SidebarNav 
+        isCollapsed={isSidebarCollapsed} 
+        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
+      />
+      
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+        {/* Header (Top Nav) - Now used for Quick Access & User Profile */}
+        <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3 overflow-x-auto no-scrollbar">
+            {quickAccessLinks.length === 0 ? (
+              <span className="text-xs text-slate-400 italic">Quick Access (Configure in Settings)</span>
+            ) : (
+              quickAccessLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="whitespace-nowrap text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-full transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ))
+            )}
+          </div>
+          
+          <div className="flex items-center gap-4 pl-4 ml-auto border-l border-slate-200">
+            <span className="text-xs text-slate-600 font-medium whitespace-nowrap">{employee?.name || user.email}</span>
+            <button 
+              onClick={() => signOut().then(() => router.push("/login"))} 
+              className="text-xs bg-slate-100 text-slate-600 px-3 py-1.5 rounded hover:bg-slate-200 hover:text-red-600 transition-colors whitespace-nowrap"
+            >
+              Sign Out
+            </button>
+          </div>
+        </header>
+        
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-auto">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
