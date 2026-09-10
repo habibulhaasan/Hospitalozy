@@ -635,6 +635,17 @@ export default function EmployeeComponent({
                         />
                       </div>
                     )}
+                    {!createAccount && (
+                      <div className="mt-2">
+                        <label className="text-xs text-slate-500 block mb-1">Firebase UID (optional, for existing account)</label>
+                        <input
+                          className="border rounded px-2 py-1.5 text-sm w-full bg-white"
+                          placeholder="Enter existing UID"
+                          value={draft.uid || ""}
+                          onChange={(e) => setDraft({ ...draft, uid: e.target.value })}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
 
