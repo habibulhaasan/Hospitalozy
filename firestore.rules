@@ -71,11 +71,13 @@ service cloud.firestore {
     }
 
     match /invoices/{docId} {
-      allow read, write: if hasPermission('billing');
+      allow read: if isSignedIn();
+      allow write: if hasPermission('billing') || hasPermission('reporting');
     }
 
     match /tickets/{docId} {
-      allow read, write: if hasPermission('billing');
+      allow read: if isSignedIn();
+      allow write: if hasPermission('billing');
     }
 
     match /reports/{docId} {
@@ -87,7 +89,7 @@ service cloud.firestore {
       // AuthContext to load `employee` after sign-in); only
       // Employees-module holders can read/write anyone else's, or
       // create/edit/delete at all.
-      allow read: if isSignedIn() && (docId == request.auth.uid || hasPermission('employees'));
+      allow read: if isSignedIn();
       allow write: if hasPermission('employees');
     }
   }
