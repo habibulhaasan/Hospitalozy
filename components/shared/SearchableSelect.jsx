@@ -29,7 +29,12 @@ export default function SearchableSelect({ value, onChange, options, placeholder
   const filtered = useMemo(() => {
     const term = (value || "").trim().toLowerCase();
     if (!term) return options;
-    return options.filter((o) => o.toLowerCase().includes(term));
+    return options.filter((o) => {
+      if (typeof o === "string") return o.toLowerCase().includes(term);
+      const quals = Array.isArray(o.qualifications) ? o.qualifications.join(" ") : (o.qualifications || "");
+      const textToSearch = `${o.name || ""} ${quals} ${o.specialty || ""} ${o.id || ""}`;
+      return textToSearch.toLowerCase().includes(term);
+    });
   }, [value, options]);
 
   return (
@@ -45,25 +50,48 @@ export default function SearchableSelect({ value, onChange, options, placeholder
         }}
       />
       {open && (
-        <div className="absolute z-10 mt-1 w-full max-h-40 overflow-y-auto bg-white border border-slate-200 rounded shadow-lg text-sm">
+        <div className="absolute z-10 mt-1 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded shadow-lg text-sm">
           {filtered.length === 0 && (
             <div className="px-2 py-1.5 text-xs text-slate-400">
               {emptyHint || "No match — your typed text will be used as-is."}
             </div>
           )}
-          {filtered.map((o) => (
-            <div
-              key={o}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                onChange(o);
-                setOpen(false);
-              }}
-              className="px-2 py-1.5 hover:bg-slate-100 cursor-pointer"
-            >
-              {o}
-            </div>
-          ))}
+          {filtered.map((o, idx) => {
+            const isObj = typeof o === "object";
+            const val = isObj ? o.name : o;
+            
+            let renderedItem = val;
+            if (isObj && o.id && (o.specialty || o.qualifications)) {
+              const quals = Array.isArray(o.qualifications) 
+                ? o.qualifications.join(", ") 
+                : o.qualifications;
+                
+              renderedItem = (
+                <div className="flex flex-col">
+                  <span className="font-medium text-slate-800">
+                    {o.name} <span className="text-xs text-slate-400 font-normal">({o.id})</span>
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    {o.specialty || "General"} {quals ? `| ${quals}` : ""}
+                  </span>
+                </div>
+              );
+            }
+
+            return (
+              <div
+                key={isObj ? o.id : o + idx}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  onChange(val);
+                  setOpen(false);
+                }}
+                className="px-2 py-1.5 hover:bg-slate-100 cursor-pointer"
+              >
+                {renderedItem}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

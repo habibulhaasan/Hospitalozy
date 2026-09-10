@@ -1,5 +1,6 @@
 "use client";
 
+import SearchableSelect from "@/components/shared/SearchableSelect";
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -55,57 +56,8 @@ const STATUS_COLORS = { PAID: "#059669", DUE: "#dc2626", FREE: "#94a3b8" };
  * other components in this project. Used for the "Referred By"
  * filter. Free typing is accepted even if it isn't in the list.
  * ------------------------------------------------------------------ */
-function SearchableSelect({ value, onChange, options, placeholder }) {
-  const [open, setOpen] = useState(false);
-  const wrapRef = useRef(null);
+// SearchableSelect is now imported from @/components/shared/SearchableSelect
 
-  useEffect(() => {
-    function handleClickOutside(e) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const filtered = useMemo(() => {
-    const term = (value || "").trim().toLowerCase();
-    if (!term) return options;
-    return options.filter((o) => o.toLowerCase().includes(term));
-  }, [value, options]);
-
-  return (
-    <div className="relative" ref={wrapRef}>
-      <input
-        className="border rounded px-2 py-1.5 text-sm w-full"
-        placeholder={placeholder}
-        value={value}
-        onFocus={() => setOpen(true)}
-        onChange={(e) => {
-          onChange(e.target.value);
-          setOpen(true);
-        }}
-      />
-      {open && (
-        <div className="absolute z-20 mt-1 w-full max-h-40 overflow-y-auto bg-white border border-slate-200 rounded shadow-lg text-sm">
-          {filtered.length === 0 && <div className="px-2 py-1.5 text-xs text-slate-400">No match.</div>}
-          {filtered.map((o) => (
-            <div
-              key={o}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                onChange(o);
-                setOpen(false);
-              }}
-              className="px-2 py-1.5 hover:bg-slate-100 cursor-pointer"
-            >
-              {o}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function KpiCard({ label, value, sub, accent }) {
   return (
