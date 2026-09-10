@@ -32,7 +32,7 @@ export default function SearchableSelect({ value, onChange, options, placeholder
     return options.filter((o) => {
       if (typeof o === "string") return o.toLowerCase().includes(term);
       const quals = Array.isArray(o.qualifications) ? o.qualifications.join(" ") : (o.qualifications || "");
-      const textToSearch = `${o.name || ""} ${quals} ${o.specialty || ""} ${o.id || ""}`;
+      const textToSearch = `${o.name || ""} ${quals} ${o.specialty || ""} ${o.id || ""} ${o.employeeId || ""} ${o.designation || ""}`;
       return textToSearch.toLowerCase().includes(term);
     });
   }, [value, options]);
@@ -76,11 +76,24 @@ export default function SearchableSelect({ value, onChange, options, placeholder
                   </span>
                 </div>
               );
+            } else if (isObj && o.employeeId) {
+              renderedItem = (
+                <div className="flex flex-col">
+                  <span className="font-medium text-slate-800">
+                    {o.name} <span className="text-xs text-slate-400 font-normal">({o.employeeId})</span>
+                  </span>
+                  {(o.designation || o.department) && (
+                    <span className="text-xs text-slate-500">
+                      {o.designation || ""} {o.department ? `| ${o.department}` : ""}
+                    </span>
+                  )}
+                </div>
+              );
             }
 
             return (
               <div
-                key={isObj ? o.id : o + idx}
+                key={isObj ? (o.id || o.employeeId || o.name) : o + idx}
                 onMouseDown={(e) => {
                   e.preventDefault();
                   onChange(val);
