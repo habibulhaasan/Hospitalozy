@@ -23,6 +23,7 @@ import LetterheadSettings from "./LetterheadSettings";
 import PatientPanel from "./PatientPanel";
 import TestPicker from "./TestPicker";
 import PrintableInvoice from "./PrintableInvoice";
+import SearchableSelect from "@/components/shared/SearchableSelect";
 import { DEFAULT_PATIENT, newId, defaultInvoiceNumber } from "./invoiceShape";
 import { calcAgeFromDOB } from "@/lib/format";
 
@@ -58,7 +59,7 @@ export default function InvoiceComponent({
   const [received, setReceived] = useState("0");
 
   const [agentOptions, setAgentOptions] = useState([]);
-  const [selectedAgentId, setSelectedAgentId] = useState("");
+  const [selectedAgentName, setSelectedAgentName] = useState("");
 
   const [confirmingReset, setConfirmingReset] = useState(false);
   const [saveInvoiceStatus, setSaveInvoiceStatus] = useState("");
@@ -171,12 +172,19 @@ export default function InvoiceComponent({
         deliveryDateTime
       };
 
-      if (selectedAgentId) {
-        const agentDoc = agentOptions.find(a => a.id === selectedAgentId);
+      if (selectedAgentName) {
+        const agentDoc = agentOptions.find(a => a.name === selectedAgentName);
         if (agentDoc) {
           payload.agentId = agentDoc.id;
           payload.agentName = agentDoc.name;
           payload.agentCommissionPercent = agentDoc.defaultCommissionPercent || 0;
+          payload.commissionStatus = "Draft";
+          payload.hasAgent = true;
+        } else {
+          // If they typed a custom name not in the system, we can just save the name with 0% commission, or ignore it.
+          // Let's save it with 0% commission.
+          payload.agentName = selectedAgentName;
+          payload.agentCommissionPercent = 0;
           payload.commissionStatus = "Draft";
           payload.hasAgent = true;
         }
@@ -237,16 +245,13 @@ export default function InvoiceComponent({
         <div className="bg-white rounded-lg border border-slate-200 p-4 no-print flex items-center gap-4">
           <div className="text-sm font-semibold text-slate-500 uppercase tracking-wide w-48">Agent / Middleman <span className="lowercase text-xs font-normal">(Optional)</span></div>
           <div className="flex-1 max-w-sm">
-            <select
-              className="w-full border rounded px-3 py-2 text-sm bg-white"
-              value={selectedAgentId}
-              onChange={(e) => setSelectedAgentId(e.target.value)}
-            >
-              <option value="">No Agent Assigned</option>
-              {agentOptions.map(a => (
-                <option key={a.id} value={a.id}>{a.name} ({a.id}) - {a.defaultCommissionPercent}%</option>
-              ))}
-            </select>
+            <SearchableSelect
+              value={selectedAgentName}
+              onChange={setSelectedAgentName}
+              options={agentOptions}
+              placeholder="Search or type agent name..."
+              emptyHint="Custom agent name will be used with 0% default commission."
+            />
           </div>
           <p className="text-xs text-slate-400">This assigns commission tracking but is hidden from the printed receipt.</p>
         </div>

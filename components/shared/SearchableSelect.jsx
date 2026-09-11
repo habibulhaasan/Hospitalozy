@@ -32,7 +32,7 @@ export default function SearchableSelect({ value, onChange, options, placeholder
     return options.filter((o) => {
       if (typeof o === "string") return o.toLowerCase().includes(term);
       const quals = Array.isArray(o.qualifications) ? o.qualifications.join(" ") : (o.qualifications || "");
-      const textToSearch = `${o.name || ""} ${quals} ${o.specialty || ""} ${o.id || ""} ${o.employeeId || ""} ${o.designation || ""}`;
+      const textToSearch = `${o.name || ""} ${quals} ${o.specialty || ""} ${o.id || ""} ${o.employeeId || ""} ${o.designation || ""} ${o.phone || ""}`;
       return textToSearch.toLowerCase().includes(term);
     });
   }, [value, options]);
@@ -87,6 +87,17 @@ export default function SearchableSelect({ value, onChange, options, placeholder
                       {o.designation || ""} {o.department ? `| ${o.department}` : ""}
                     </span>
                   )}
+                </div>
+              );
+            } else if (isObj && o.id && String(o.id).startsWith("AGT-")) {
+              renderedItem = (
+                <div className="flex flex-col">
+                  <span className="font-medium text-slate-800">
+                    {o.name} <span className="text-xs text-slate-400 font-normal">({o.id})</span>
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    {o.phone ? `Phone: ${o.phone}` : "No phone"} | {o.defaultCommissionPercent}% share
+                  </span>
                 </div>
               );
             }
