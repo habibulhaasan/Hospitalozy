@@ -13,6 +13,13 @@ import { REPORTABLE_PARAMETERS as TEST_CATALOG } from "@/data/reportableParamete
  * and reference range for display. */
 const TEST_BY_NAME = Object.fromEntries(TEST_CATALOG.map((t) => [t.name, t]));
 
+const STATUS_STYLE = {
+  Draft: "bg-red-50 text-orange-700",
+  Pending: "bg-yellow-50 text-yellow-700",
+  Completed: "bg-slate-100 text-slate-800",
+  Delivered: "bg-emerald-50 text-emerald-700",
+};
+
 const CATEGORY_SPECIMEN = {
   Hematology: "Blood",
   Coagulation: "Blood",
@@ -267,7 +274,11 @@ export default function LabReportListComponent({
                     <td className="py-2 px-3">
                       <div className="flex items-center gap-1">
                         <select 
-                          className="text-xs border border-slate-200 rounded px-1 py-0.5 bg-transparent"
+                          className={`text-[10px] px-2 py-1 rounded-full font-semibold border-0 outline-none cursor-pointer ${
+                            STATUS_STYLE[pendingStatuses[rep.id] ?? rep.status ?? "Completed"] || "bg-slate-100 text-slate-600"
+                          }`}
+                          style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', textAlign: 'center' }}
+                          title="Click to change status"
                           value={pendingStatuses[rep.id] ?? rep.status ?? "Completed"}
                           onChange={(e) => {
                             const newStatus = e.target.value;
@@ -293,7 +304,7 @@ export default function LabReportListComponent({
                                 });
                               }
                             }}
-                            className="bg-blue-600 text-white px-2 py-0.5 rounded text-[10px] font-medium ml-1"
+                            className="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-medium ml-1"
                           >
                             Save
                           </button>
@@ -301,7 +312,7 @@ export default function LabReportListComponent({
                       </div>
                     </td>
                     <td className="py-2 px-3 text-xs">
-                      {rep.isPrinted ? <span className="text-emerald-600 font-medium">Yes</span> : <span className="text-slate-400">No</span>}
+                      {rep.isPrinted ? <span className="text-[10px] px-2 py-1 rounded-full font-semibold bg-emerald-50 text-emerald-700">Yes</span> : <span className="text-slate-400">No</span>}
                     </td>
                     <td className="py-2 px-3">
                       <div className="flex items-center gap-2">
