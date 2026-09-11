@@ -31,7 +31,7 @@ import { useQuickAccess } from "@/hooks/useQuickAccess";
 export default function DashboardLayout({ children }) {
   const router = useRouter();
   const { user, employee, loading, signOut } = useAuth();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const { quickAccessLinks } = useQuickAccess();
 
   useEffect(() => {
