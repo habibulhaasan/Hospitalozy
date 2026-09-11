@@ -156,6 +156,7 @@ const DEFAULT_PATIENT = {
  *     just work as free-text fields with nothing to suggest.
  */
 export default function LabReportComponent({
+  initialReport = null,
   onLookupPatient = async () => null,
   onLookupInvoice = async () => null,
   onSearchBillingSource = async () => [],
@@ -166,20 +167,20 @@ export default function LabReportComponent({
   onLoadTechnologists = async () => [],
   onLoadPathologists = async () => [],
 } = {}) {
-  const [patient, setPatient] = useState(DEFAULT_PATIENT);
-  const [hospitalName, setHospitalName] = useState("Upazila Health Complex");
-  const [hospitalAddress, setHospitalAddress] = useState("");
+  const [patient, setPatient] = useState(initialReport?.patient || DEFAULT_PATIENT);
+  const [hospitalName, setHospitalName] = useState(initialReport?.hospitalName || "Upazila Health Complex");
+  const [hospitalAddress, setHospitalAddress] = useState(initialReport?.hospitalAddress || "");
   const [showLetterhead, setShowLetterhead] = useState(true);
   const [letterheadSpace, setLetterheadSpace] = useState(40); // mm reserved when using preprinted letterhead
-  const [technologist, setTechnologist] = useState("");
-  const [pathologist, setPathologist] = useState("");
+  const [technologist, setTechnologist] = useState(initialReport?.technologist || "");
+  const [pathologist, setPathologist] = useState(initialReport?.pathologist || "");
   const [doctorOptions, setDoctorOptions] = useState([]);
   const [technologistOptions, setTechnologistOptions] = useState([]);
   const [pathologistOptions, setPathologistOptions] = useState([]);
   const [search, setSearch] = useState("");
   const [activeCat, setActiveCat] = useState("General");
-  const [selected, setSelected] = useState([]); // array of {name, result}
-  const [extraPages, setExtraPages] = useState([]); // free-text pages for tests outside the catalog
+  const [selected, setSelected] = useState(initialReport?.tests || []); // array of {name, result}
+  const [extraPages, setExtraPages] = useState(initialReport?.extraPages || []); // free-text pages for tests outside the catalog
   const [lookupStatus, setLookupStatus] = useState(""); // "", "loading", "found", "not-found", "error"
   const [saveStatus, setSaveStatus] = useState(""); // "", "saving", "saved", "error"
   const [confirmingReset, setConfirmingReset] = useState(false);
@@ -345,6 +346,7 @@ export default function LabReportComponent({
     setSaveStatus("saving");
     try {
       await onSaveReport({
+        id: initialReport?.id,
         hospitalName,
         hospitalAddress,
         patient: { ...patient, referredBy: patient.referredBy || "Self" },

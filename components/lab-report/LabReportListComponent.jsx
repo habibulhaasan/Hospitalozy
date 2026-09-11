@@ -102,6 +102,8 @@ function fmtDate(d) {
 export default function LabReportListComponent({
   onLoadRecentReports = async () => [],
   onSearchReports = async () => [],
+  onUpdateStatus = async () => true,
+  onMarkPrinted = async () => true,
   hospitalName: fallbackHospitalName = "Upazila Health Complex",
   hospitalAddress: fallbackHospitalAddress = "",
 } = {}) {
@@ -159,8 +161,14 @@ export default function LabReportListComponent({
     }
   }
 
-  function handlePrint() {
+  async function handlePrint() {
     window.print();
+    if (selected && selected.id && onMarkPrinted && !selected.isPrinted) {
+      await onMarkPrinted(selected.id);
+      // Update local state
+      setReports((prev) => prev.map((r) => r.id === selected.id ? { ...r, isPrinted: true } : r));
+      setSelected((prev) => ({ ...prev, isPrinted: true }));
+    }
   }
 
   // Build the same "one category per page" structure the Lab Report
@@ -242,23 +250,68 @@ export default function LabReportListComponent({
                   <th className="py-2 px-3 font-medium">Reg / ID</th>
                   <th className="py-2 px-3 font-medium"># Tests</th>
                   <th className="py-2 px-3 font-medium">Technologist</th>
-                  <th className="py-2 px-3 font-medium">Pathologist</th>
-                  <th className="py-2 px-3 font-medium w-20">Action</th>
+                  <th className="py-2 px-3 font-medium">Status</th>
+                  <th className="py-2 px-3 font-medium">Printed?</th>
+                  <th className="py-2 px-3 font-medium w-32">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {reports.map((rep, idx) => (
-                  <tr key={rep.patient?.regNo ? `${rep.patient.regNo}-${rep.patient?.reportDate}-${idx}` : idx} className="border-b border-slate-100">
+                  <tr key={rep.id || idx} className="border-b border-slate-100">
                     <td className="py-2 px-3 whitespace-nowrap">{fmtDate(rep.patient?.reportDate)}</td>
                     <td className="py-2 px-3 font-medium">{rep.patient?.name || "—"}</td>
                     <td className="py-2 px-3 text-xs text-slate-400">{rep.patient?.regNo || "—"}</td>
                     <td className="py-2 px-3">{(rep.tests || []).length}</td>
                     <td className="py-2 px-3">{rep.technologist || "—"}</td>
-                    <td className="py-2 px-3">{rep.pathologist || "—"}</td>
                     <td className="py-2 px-3">
-                      <button onClick={() => setSelected(rep)} className="text-xs text-slate-600 hover:text-slate-900 underline">
-                        View
-                      </button>
+                      <select 
+                        className="text-xs border border-slate-200 rounded px-1 py-0.5 bg-transparent"
+                        value={rep.status || "Completed"}
+                        onChange={async (e) => {
+                          const newStatus = e.target.value;
+                          if (onUpdateStatus) {
+                            await onUpdateStatus(rep.id, newStatus);
+                            setReports(reports.map(r => r.id === rep.id ? { ...r, status: newStatus } : r));
+                          }
+                        }}
+                      >
+                        <option value="Draft">Draft</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Delivered">Delivered</option>
+                      </select>
+                    </td>
+                    <td className="py-2 px-3 text-xs">
+                      {rep.isPrinted ? <span className="text-emerald-600 font-medium">Yes</span> : <span className="text-slate-400">No</span>}
+                    </td>
+                    <td className="py-2 px-3">
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => setSelected(rep)} className="text-xs text-slate-600 hover:text-slate-900 underline">
+                          View
+                        </button>
+                        {rep.id && (
+                          <a href={`/dashboard/lab-reports/${rep.id}/edit`} className="text-xs text-blue-600 hover:text-blue-900 underline">
+                            Edit
+                          </a>
+                        )}
+                        <button 
+                          onClick={() => {
+                            setSelected(rep);
+                            setTimeout(() => {
+                              window.print();
+                              if (rep.id && onMarkPrinted && !rep.isPrinted) {
+                                onMarkPrinted(rep.id).then(() => {
+                                  setReports((prev) => prev.map((r) => r.id === rep.id ? { ...r, isPrinted: true } : r));
+                                  setSelected((prev) => prev?.id === rep.id ? { ...prev, isPrinted: true } : prev);
+                                });
+                              }
+                            }, 500);
+                          }} 
+                          className="text-xs text-emerald-600 hover:text-emerald-900 underline"
+                        >
+                          Print
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
