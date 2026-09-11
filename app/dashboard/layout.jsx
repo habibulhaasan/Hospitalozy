@@ -22,7 +22,7 @@
  * not access control.
  * ------------------------------------------------------------------ */
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import SidebarNav from "@/components/shared/SidebarNav";
@@ -30,6 +30,7 @@ import { useQuickAccess } from "@/hooks/useQuickAccess";
 
 export default function DashboardLayout({ children }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, employee, loading, signOut } = useAuth();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const { quickAccessLinks } = useQuickAccess();
@@ -37,6 +38,11 @@ export default function DashboardLayout({ children }) {
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
   }, [loading, user, router]);
+
+  // Collapse sidebar on route change
+  useEffect(() => {
+    setIsSidebarCollapsed(true);
+  }, [pathname]);
 
   if (loading) return <div className="p-8 text-sm text-slate-400">Loading…</div>;
   if (!user) return null; // redirect effect above is about to fire
