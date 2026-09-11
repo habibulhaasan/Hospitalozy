@@ -117,6 +117,7 @@ export default function LabReportListComponent({
   const [searchStatus, setSearchStatus] = useState(""); // "", "searching", "error"
 
   const [selected, setSelected] = useState(null); // the report record currently being viewed/reprinted
+  const [pendingStatuses, setPendingStatuses] = useState({}); // track unsaved status changes
 
   useEffect(() => {
     onLoadRecentReports(50)
@@ -264,22 +265,40 @@ export default function LabReportListComponent({
                     <td className="py-2 px-3">{(rep.tests || []).length}</td>
                     <td className="py-2 px-3">{rep.technologist || "—"}</td>
                     <td className="py-2 px-3">
-                      <select 
-                        className="text-xs border border-slate-200 rounded px-1 py-0.5 bg-transparent"
-                        value={rep.status || "Completed"}
-                        onChange={async (e) => {
-                          const newStatus = e.target.value;
-                          if (onUpdateStatus) {
-                            await onUpdateStatus(rep.id, newStatus);
-                            setReports(reports.map(r => r.id === rep.id ? { ...r, status: newStatus } : r));
-                          }
-                        }}
-                      >
-                        <option value="Draft">Draft</option>
-                        <option value="Pending">Pending</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Delivered">Delivered</option>
-                      </select>
+                      <div className="flex items-center gap-1">
+                        <select 
+                          className="text-xs border border-slate-200 rounded px-1 py-0.5 bg-transparent"
+                          value={pendingStatuses[rep.id] ?? rep.status ?? "Completed"}
+                          onChange={(e) => {
+                            const newStatus = e.target.value;
+                            setPendingStatuses(prev => ({ ...prev, [rep.id]: newStatus }));
+                          }}
+                        >
+                          <option value="Draft">Draft</option>
+                          <option value="Pending">Pending</option>
+                          <option value="Completed">Completed</option>
+                          <option value="Delivered">Delivered</option>
+                        </select>
+                        {pendingStatuses[rep.id] && pendingStatuses[rep.id] !== (rep.status ?? "Completed") && (
+                          <button 
+                            onClick={async () => {
+                              const newStatus = pendingStatuses[rep.id];
+                              if (onUpdateStatus) {
+                                await onUpdateStatus(rep.id, newStatus);
+                                setReports(reports.map(r => r.id === rep.id ? { ...r, status: newStatus } : r));
+                                setPendingStatuses(prev => {
+                                  const next = { ...prev };
+                                  delete next[rep.id];
+                                  return next;
+                                });
+                              }
+                            }}
+                            className="bg-blue-600 text-white px-2 py-0.5 rounded text-[10px] font-medium ml-1"
+                          >
+                            Save
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td className="py-2 px-3 text-xs">
                       {rep.isPrinted ? <span className="text-emerald-600 font-medium">Yes</span> : <span className="text-slate-400">No</span>}
