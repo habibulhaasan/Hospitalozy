@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 /**
  * app/dashboard/invoices/new/page.jsx
@@ -11,8 +11,9 @@
  * ------------------------------------------------------------------ */
 import PermissionGate from "@/components/shared/PermissionGate";
 import InvoiceComponent from "@/components/invoice/InvoiceComponent";
-import { lookupPatientByIdOrMobile, savePatient, searchPatients } from "@/lib/firestore/patients";
+import { lookupPatientByIdOrMobile, searchPatients, savePatient } from "@/lib/firestore/patients";
 import { loadActiveDoctorNames } from "@/lib/firestore/doctors";
+import { loadActiveAgents } from "@/lib/firestore/agents";
 import { saveInvoice } from "@/lib/firestore/invoices";
 
 export default function NewInvoicePage() {
@@ -23,6 +24,7 @@ export default function NewInvoicePage() {
         onSearchPatients={searchPatients}
         onSavePatient={savePatient}
         onLoadDoctors={loadActiveDoctorNames}
+        onLoadAgents={loadActiveAgents}
         onSaveInvoice={saveInvoice}
       />
     </PermissionGate>

@@ -7,7 +7,7 @@ import { usePermissions } from "@/hooks/usePermission";
 import { 
   LayoutDashboard, Users, Receipt, History, Calculator, 
   FileText, FlaskConical, Stethoscope, UserCog, Database, 
-  Settings, ChevronRight, ChevronLeft, Activity 
+  Settings, ChevronRight, ChevronLeft, Activity, Briefcase, HandCoins
 } from "lucide-react";
 
 const NAV_GROUPS = [
@@ -25,6 +25,7 @@ const NAV_GROUPS = [
     items: [
       { href: "/dashboard/invoices/new", label: "New Invoice", icon: Receipt },
       { href: "/dashboard/invoices", label: "Invoice History", exact: true, icon: History },
+      { href: "/dashboard/commissions", label: "Commissions", icon: HandCoins },
       { href: "/dashboard/accounting", label: "Accounting", icon: Calculator }
     ]
   },
@@ -40,6 +41,7 @@ const NAV_GROUPS = [
     label: "Administration",
     items: [
       { href: "/dashboard/doctors", label: "Doctors", module: "doctors", icon: Stethoscope },
+      { href: "/dashboard/agents", label: "Agents", module: "billing", icon: Briefcase },
       { href: "/dashboard/employees", label: "Employees", module: "employees", icon: UserCog },
       { href: "/dashboard/test-master", label: "Test Master", module: "testMaster", icon: Database },
       { href: "/dashboard/settings", label: "Settings", module: "settings", icon: Settings }

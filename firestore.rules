@@ -61,6 +61,10 @@ service cloud.firestore {
       allow read, write: if isSignedIn();
     }
 
+    match /agents/{docId} {
+      allow read, write: if isSignedIn();
+    }
+
     match /counters/{counterId} {
       // Backs lib/firestore/counters.js's atomic sequential-ID
       // generator (DOC-000001, PAT-000001, EMP-000001 style). Just an

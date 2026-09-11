@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 /**
  * components/invoice/InvoiceComponent.jsx
@@ -31,6 +31,7 @@ export default function InvoiceComponent({
   onSearchPatients = async () => [],
   onSavePatient = async (patientData) => patientData.patientId || `P-${Date.now().toString().slice(-8)}`,
   onLoadDoctors = async () => [],
+  onLoadAgents = async () => [],
   onSaveInvoice = async (payload) => {
     console.log("onSaveInvoice not wired up yet — payload:", payload);
   },
@@ -56,11 +57,15 @@ export default function InvoiceComponent({
   const [discount, setDiscount] = useState("0");
   const [received, setReceived] = useState("0");
 
+  const [agentOptions, setAgentOptions] = useState([]);
+  const [selectedAgentId, setSelectedAgentId] = useState("");
+
   const [confirmingReset, setConfirmingReset] = useState(false);
   const [saveInvoiceStatus, setSaveInvoiceStatus] = useState("");
 
   useEffect(() => {
-    onLoadDoctors().then(setDoctorOptions).catch(() => {});
+    onLoadDoctors().then((docs) => setDoctorOptions(Array.isArray(docs) ? docs : []));
+    onLoadAgents().then((agents) => setAgentOptions(Array.isArray(agents) ? agents : []));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -154,7 +159,30 @@ export default function InvoiceComponent({
   async function handleSaveInvoice() {
     setSaveInvoiceStatus("saving");
     try {
-      await onSaveInvoice({ invoiceNumber, billDateTime, hospitalName, hospitalAddress, patient, lineItems, totals, status, deliveryDateTime });
+      const payload = {
+        invoiceNumber,
+        billDateTime,
+        hospitalName,
+        hospitalAddress,
+        patient,
+        lineItems,
+        totals,
+        status,
+        deliveryDateTime
+      };
+
+      if (selectedAgentId) {
+        const agentDoc = agentOptions.find(a => a.id === selectedAgentId);
+        if (agentDoc) {
+          payload.agentId = agentDoc.id;
+          payload.agentName = agentDoc.name;
+          payload.agentCommissionPercent = agentDoc.defaultCommissionPercent || 0;
+          payload.commissionStatus = "Draft";
+          payload.hasAgent = true;
+        }
+      }
+
+      await onSaveInvoice(payload);
       setSaveInvoiceStatus("saved");
     } catch (err) {
       console.error(err);
@@ -204,6 +232,24 @@ export default function InvoiceComponent({
           savePatientStatus={savePatientStatus}
           onSavePatient={handleSavePatient}
         />
+
+        {/* Agent Assignment (Hidden from print) */}
+        <div className="bg-white rounded-lg border border-slate-200 p-4 no-print flex items-center gap-4">
+          <div className="text-sm font-semibold text-slate-500 uppercase tracking-wide w-48">Agent / Middleman <span className="lowercase text-xs font-normal">(Optional)</span></div>
+          <div className="flex-1 max-w-sm">
+            <select
+              className="w-full border rounded px-3 py-2 text-sm bg-white"
+              value={selectedAgentId}
+              onChange={(e) => setSelectedAgentId(e.target.value)}
+            >
+              <option value="">No Agent Assigned</option>
+              {agentOptions.map(a => (
+                <option key={a.id} value={a.id}>{a.name} ({a.id}) - {a.defaultCommissionPercent}%</option>
+              ))}
+            </select>
+          </div>
+          <p className="text-xs text-slate-400">This assigns commission tracking but is hidden from the printed receipt.</p>
+        </div>
 
         <div className="bg-white rounded-lg border border-slate-200 p-4">
           <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Add Test to Bill</h2>

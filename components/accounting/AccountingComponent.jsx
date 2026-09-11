@@ -190,6 +190,7 @@ export default function AccountingComponent({
   // ---- KPIs ----
   const kpis = useMemo(() => {
     let totalBilled = 0, totalNetBill = 0, totalCollected = 0, totalDue = 0, totalDiscount = 0, totalPreviousDue = 0;
+    let totalCommissionDisbursed = 0;
     filteredInvoices.forEach((inv) => {
       const t = inv.totals || {};
       const due = Math.max(t.due || 0, 0);
@@ -200,11 +201,16 @@ export default function AccountingComponent({
       totalDue += due;
       totalDiscount += (t.payable || 0) - (t.netBill || 0);
       totalPreviousDue += (t.payable || 0) - (t.total || 0);
+
+      if (inv.commissionStatus === "Disbursed") {
+        totalCommissionDisbursed += ((t.netBill || 0) * (inv.agentCommissionPercent || 0)) / 100;
+      }
     });
     const count = filteredInvoices.length;
     const avgBill = count ? totalNetBill / count : 0;
     const collectionRate = totalNetBill > 0 ? (totalCollected / totalNetBill) * 100 : 0;
-    return { totalBilled, totalNetBill, totalCollected, totalDue, totalDiscount, totalPreviousDue, count, avgBill, collectionRate };
+    const netRevenue = totalCollected - totalCommissionDisbursed; // Actual cash the hospital keeps
+    return { totalBilled, totalNetBill, totalCollected, totalDue, totalDiscount, totalPreviousDue, count, avgBill, collectionRate, totalCommissionDisbursed, netRevenue };
   }, [filteredInvoices]);
 
   // ---- Revenue trend (bucketed by day if range is short, else by month) ----
@@ -337,11 +343,13 @@ export default function AccountingComponent({
         {loadStatus === "loaded" && (
           <>
             {/* ---- KPI cards ---- */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
               <KpiCard label="Net Billed" value={formatMoney(kpis.totalNetBill)} sub={`${kpis.count} invoice${kpis.count !== 1 ? "s" : ""}`} />
               <KpiCard label="Collected" value={formatMoney(kpis.totalCollected)} accent="text-emerald-700" sub={`${kpis.collectionRate.toFixed(1)}% collection rate`} />
               <KpiCard label="Outstanding Due" value={formatMoney(kpis.totalDue)} accent="text-red-600" />
               <KpiCard label="Discount Given" value={formatMoney(kpis.totalDiscount)} sub={`Avg. bill ${formatMoney(kpis.avgBill)}`} />
+              <KpiCard label="Commission Paid" value={formatMoney(kpis.totalCommissionDisbursed)} accent="text-orange-600" sub="To agents/middlemen" />
+              <KpiCard label="Net Revenue" value={formatMoney(kpis.netRevenue)} accent="text-emerald-700" sub="Collected - Commissions" />
             </div>
 
             {/* ---- Revenue trend ---- */}
