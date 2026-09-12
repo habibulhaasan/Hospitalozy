@@ -48,15 +48,17 @@ export default function DashboardLayout({ children }) {
   if (!user) return null; // redirect effect above is about to fire
 
   return (
-    <div className="flex h-screen bg-slate-100 overflow-hidden">
-      <SidebarNav 
-        isCollapsed={isSidebarCollapsed} 
-        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
-      />
+    <div className="flex h-screen bg-slate-100 overflow-hidden print:h-auto print:bg-white print:overflow-visible print:block">
+      <div className="print:hidden shrink-0">
+        <SidebarNav 
+          isCollapsed={isSidebarCollapsed} 
+          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
+        />
+      </div>
       
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden print:h-auto print:overflow-visible print:block">
         {/* Header (Top Nav) - Now used for Quick Access & User Profile */}
-        <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shrink-0">
+        <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shrink-0 print:hidden">
           <div className="flex items-center gap-3 overflow-x-auto no-scrollbar">
             {quickAccessLinks.length === 0 ? (
               <span className="text-xs text-slate-400 italic">Quick Access (Configure in Settings)</span>
@@ -85,7 +87,7 @@ export default function DashboardLayout({ children }) {
         </header>
         
         {/* Main Content Area */}
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto print:overflow-visible print:block">
           {children}
         </main>
       </div>
