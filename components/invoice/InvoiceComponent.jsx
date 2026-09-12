@@ -320,6 +320,7 @@ export default function InvoiceComponent({
         setDiscount={setDiscount}
         received={received}
         setReceived={setReceived}
+        doctorOptions={doctorOptions}
       />
     </div>
   );

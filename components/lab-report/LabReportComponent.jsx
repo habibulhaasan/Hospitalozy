@@ -717,7 +717,18 @@ export default function LabReportComponent({
                 <div><span className="text-slate-500">Name:</span> <b>{patient.name || "—"}</b></div>
                 <div><span className="text-slate-500">Reg / ID:</span> <b>{patient.regNo || "—"}</b></div>
                 <div><span className="text-slate-500">Age / Sex:</span> <b>{patient.age || "—"} / {patient.sex === "M" ? "Male" : "Female"}</b></div>
-                <div><span className="text-slate-500">Referred By:</span> <b>{patient.referredBy || "Self"}</b></div>
+                <div>
+                  <span className="text-slate-500">Referred By:</span>{" "}
+                  <b>
+                    {(() => {
+                      if (!patient.referredBy || patient.referredBy === "Self") return patient.referredBy || "Self";
+                      const doc = (doctorOptions || []).find((d) => d.name === patient.referredBy);
+                      if (!doc) return patient.referredBy;
+                      const quals = Array.isArray(doc.qualifications) ? doc.qualifications.join(", ") : doc.qualifications;
+                      return [doc.name, quals, doc.specialty].filter(Boolean).join(", ");
+                    })()}
+                  </b>
+                </div>
                 <div><span className="text-slate-500">Collected:</span> <b>{patient.collectionDate || "—"}</b></div>
                 <div><span className="text-slate-500">Reported:</span> <b>{patient.reportDate || "—"}</b></div>
                 <div className="col-span-2"><span className="text-slate-500">Specimen:</span> <b>{specimenSummary || "—"}</b></div>

@@ -112,6 +112,7 @@ export default function LabReportListComponent({
   onSearchReports = async () => [],
   onUpdateStatus = async () => true,
   onMarkPrinted = async () => true,
+  onLoadDoctors = async () => [],
   onLoadTechnologists = async () => [],
   onLoadPathologists = async () => [],
   hospitalName: fallbackHospitalName = "Upazila Health Complex",
@@ -130,8 +131,10 @@ export default function LabReportListComponent({
   const [pendingStatuses, setPendingStatuses] = useState({}); // track unsaved status changes
   const [technologistOptions, setTechnologistOptions] = useState([]);
   const [pathologistOptions, setPathologistOptions] = useState([]);
+  const [doctorOptions, setDoctorOptions] = useState([]);
 
   useEffect(() => {
+    onLoadDoctors().then(setDoctorOptions).catch(() => {});
     onLoadTechnologists().then(setTechnologistOptions).catch(() => {});
     onLoadPathologists().then(setPathologistOptions).catch(() => {});
     
@@ -410,7 +413,19 @@ export default function LabReportListComponent({
                   <div><span className="text-slate-500">Name:</span> <b>{selected.patient?.name || "—"}</b></div>
                   <div><span className="text-slate-500">Reg / ID:</span> <b>{selected.patient?.regNo || "—"}</b></div>
                   <div><span className="text-slate-500">Age / Sex:</span> <b>{selected.patient?.age || "—"} / {selected.patient?.sex === "M" ? "Male" : "Female"}</b></div>
-                  <div><span className="text-slate-500">Referred By:</span> <b>{selected.patient?.referredBy || "Self"}</b></div>
+                  <div>
+                    <span className="text-slate-500">Referred By:</span>{" "}
+                    <b>
+                      {(() => {
+                        const refBy = selected.patient?.referredBy;
+                        if (!refBy || refBy === "Self") return refBy || "Self";
+                        const doc = doctorOptions.find((d) => d.name === refBy);
+                        if (!doc) return refBy;
+                        const quals = Array.isArray(doc.qualifications) ? doc.qualifications.join(", ") : doc.qualifications;
+                        return [doc.name, quals, doc.specialty].filter(Boolean).join(", ");
+                      })()}
+                    </b>
+                  </div>
                   <div><span className="text-slate-500">Collected:</span> <b>{fmtDate(selected.patient?.collectionDate)}</b></div>
                   <div><span className="text-slate-500">Reported:</span> <b>{fmtDate(selected.patient?.reportDate)}</b></div>
                   <div className="col-span-2"><span className="text-slate-500">Specimen:</span> <b>{specimenSummary || "—"}</b></div>

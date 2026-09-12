@@ -38,6 +38,7 @@ export default function PrintableInvoice({
   setDiscount,
   received,
   setReceived,
+  doctorOptions,
 }) {
   return (
     <div
@@ -77,8 +78,19 @@ export default function PrintableInvoice({
           <span className="text-slate-500">/ Gender:</span> <b>{patient.gender}</b>
         </div>
         <div><span className="text-slate-500">NID/BRN:</span> <b>{patient.nid || "—"}</b></div>
-        <div><span className="text-slate-500">Referred By:</span> <b>{patient.referredBy || "—"}</b></div>
         <div className="col-span-2"><span className="text-slate-500">Address:</span> <b>{patient.address || "—"}</b></div>
+        <div className="col-span-2">
+          <span className="text-slate-500">Referred By:</span>{" "}
+          <b>
+            {(() => {
+              if (!patient.referredBy || patient.referredBy === "Self") return patient.referredBy || "—";
+              const doc = (doctorOptions || []).find((d) => d.name === patient.referredBy);
+              if (!doc) return patient.referredBy;
+              const quals = Array.isArray(doc.qualifications) ? doc.qualifications.join(", ") : doc.qualifications;
+              return [doc.name, quals, doc.specialty].filter(Boolean).join(", ");
+            })()}
+          </b>
+        </div>
       </div>
 
       <div className="flex-1">

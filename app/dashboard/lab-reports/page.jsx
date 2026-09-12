@@ -3,7 +3,7 @@
 import PermissionGate from "@/components/shared/PermissionGate";
 import LabReportListComponent from "@/components/lab-report/LabReportListComponent";
 import { loadRecentReports, searchReports, updateReportStatus, markReportPrinted } from "@/lib/firestore/reports";
-import { loadActivePathologistNames } from "@/lib/firestore/doctors";
+import { loadActivePathologistNames, loadActiveDoctorNames } from "@/lib/firestore/doctors";
 import { loadMedicalTechnologistNames } from "@/lib/firestore/employees";
 
 export default function LabReportsPage() {
@@ -14,6 +14,7 @@ export default function LabReportsPage() {
         onSearchReports={searchReports}
         onUpdateStatus={updateReportStatus}
         onMarkPrinted={markReportPrinted} 
+        onLoadDoctors={loadActiveDoctorNames}
         onLoadTechnologists={loadMedicalTechnologistNames}
         onLoadPathologists={loadActivePathologistNames}
       />
