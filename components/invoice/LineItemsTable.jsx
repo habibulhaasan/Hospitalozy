@@ -37,7 +37,7 @@ export default function LineItemsTable({ lineItems, onUpdateItem, onRemoveItem }
             <td className="py-1 pr-2 text-right">
               <input
                 type="number"
-                className="w-16 text-right bg-transparent border-b border-slate-300 outline-none print:border-slate-300"
+                className="w-16 text-right bg-white border border-slate-300 rounded px-1 py-0.5 outline-none print:border-none print:p-0 print:m-0 print:bg-transparent"
                 value={it.rate}
                 onChange={(e) => onUpdateItem(it.id, "rate", e.target.value)}
               />
@@ -46,7 +46,7 @@ export default function LineItemsTable({ lineItems, onUpdateItem, onRemoveItem }
               <input
                 type="number"
                 min="1"
-                className="w-10 text-right bg-transparent border-b border-slate-300 outline-none print:border-slate-300"
+                className="w-10 text-right bg-white border border-slate-300 rounded px-1 py-0.5 outline-none print:border-none print:p-0 print:m-0 print:bg-transparent"
                 value={it.qty}
                 onChange={(e) => onUpdateItem(it.id, "qty", e.target.value)}
               />

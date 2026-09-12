@@ -23,14 +23,14 @@ export default function TotalsPanel({ totals, previousDue, setPreviousDue, disco
           <td className="py-0.5 text-right">
             <input
               type="number"
-              className="w-24 text-right bg-transparent border-b border-slate-300 outline-none print:border-slate-300"
+              className="w-24 text-right bg-white border border-slate-300 rounded px-1 py-0.5 outline-none print:border-none print:p-0 print:m-0 print:bg-transparent"
               value={previousDue}
-              onChange={(e) => setPreviousDue(e.target.value)}
+              onChange={(e) => setPreviousDue(Number(e.target.value) || 0)}
             />
           </td>
         </tr>
         <tr className="border-t border-slate-200">
-          <td className="py-0.5 text-slate-500">Payable</td>
+          <td className="py-0.5 font-medium">Payable</td>
           <td className="py-0.5 text-right font-medium">{formatMoney(totals.payable)}</td>
         </tr>
         <tr>
@@ -38,9 +38,9 @@ export default function TotalsPanel({ totals, previousDue, setPreviousDue, disco
           <td className="py-0.5 text-right">
             <input
               type="number"
-              className="w-24 text-right bg-transparent border-b border-slate-300 outline-none print:border-slate-300"
+              className="w-24 text-right bg-white border border-slate-300 rounded px-1 py-0.5 outline-none print:border-none print:p-0 print:m-0 print:bg-transparent"
               value={discount}
-              onChange={(e) => setDiscount(e.target.value)}
+              onChange={(e) => setDiscount(Number(e.target.value) || 0)}
             />
           </td>
         </tr>
@@ -53,9 +53,9 @@ export default function TotalsPanel({ totals, previousDue, setPreviousDue, disco
           <td className="py-0.5 text-right">
             <input
               type="number"
-              className="w-24 text-right bg-transparent border-b border-slate-300 outline-none print:border-slate-300"
+              className="w-24 text-right bg-white border border-slate-300 rounded px-1 py-0.5 outline-none print:border-none print:p-0 print:m-0 print:bg-transparent"
               value={received}
-              onChange={(e) => setReceived(e.target.value)}
+              onChange={(e) => setReceived(Number(e.target.value) || 0)}
             />
           </td>
         </tr>
