@@ -1,6 +1,7 @@
 "use client";
 
 import SearchableSelect from "@/components/shared/SearchableSelect";
+import AsyncSearchableSelect from "@/components/shared/AsyncSearchableSelect";
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Printer } from "lucide-react";
 
@@ -159,6 +160,7 @@ export default function PatientBillingComponent({
   roomAssignments = DEFAULT_ROOM_ASSIGNMENTS,
   rxLines = [],
   onLookupPatientByIdOrMobile = async () => null,
+  onSearchPatients = async () => [],
   onSavePatient = async (patientData) => patientData.patientId || `P-${Date.now().toString().slice(-8)}`,
   onLoadDoctors = async () => [],
   onSaveBill = async (payload) => {
@@ -296,21 +298,50 @@ export default function PatientBillingComponent({
 
           {patientMode === "existing" && (
             <div className="mb-3">
-              <div className="flex gap-1.5">
-                <input
-                  className="border rounded px-2 py-1.5 text-sm flex-1"
-                  placeholder="Search by Patient ID, Mobile Number, or NID/BRN"
-                  value={lookupQuery}
-                  onChange={(e) => setLookupQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleLookupPatient()}
-                />
-                <button onClick={handleLookupPatient} disabled={!lookupQuery.trim() || lookupStatus === "loading"} className="text-xs px-3 rounded border border-gray-300 bg-gray-50 disabled:opacity-50 whitespace-nowrap">
-                  {lookupStatus === "loading" ? "Searching…" : "Search"}
-                </button>
-              </div>
+              <label className="text-xs text-gray-500 block mb-1">
+                Search Existing Patient
+              </label>
+              <AsyncSearchableSelect
+                onSearch={async (query) => {
+                  if (!onSearchPatients) return [];
+                  const results = await onSearchPatients(query);
+                  return Array.isArray(results) ? results : [];
+                }}
+                onSelect={(selectedItem) => {
+                  if (selectedItem) {
+                    setPatient((prev) => ({ ...prev, ...selectedItem }));
+                    setLookupStatus("found");
+                  } else {
+                    setPatient(DEFAULT_PATIENT);
+                    setLookupStatus("");
+                  }
+                }}
+                placeholder="Type Patient ID, Name, Mobile, or NID to search…"
+                emptyHint="No matching patient found."
+                renderItem={(item) => {
+                  const ageParts = [
+                    item.ageY ? `${item.ageY}Y` : '',
+                    item.ageM ? `${item.ageM}M` : '',
+                    item.ageD ? `${item.ageD}D` : ''
+                  ].filter(Boolean).join(' ') || "—";
+
+                  return (
+                    <div className="flex justify-between items-center gap-2 py-0.5">
+                      <div className="flex flex-col">
+                        <span className="font-medium text-slate-800">
+                          {item.name || "Unnamed Patient"}{" "}
+                          <span className="text-xs text-slate-400 font-normal">({item.patientId})</span>
+                        </span>
+                        <span className="text-xs text-slate-500">
+                          Age: {ageParts} | Mobile: {item.mobile || "—"}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                }}
+                renderValue={(item) => item ? `${item.name} (${item.patientId})` : ""}
+              />
               {lookupStatus === "found" && <p className="text-xs text-emerald-600 mt-1">Patient found — details filled in below.</p>}
-              {lookupStatus === "not-found" && <p className="text-xs text-amber-600 mt-1">No patient found — switch to "New Patient" to register them.</p>}
-              {lookupStatus === "error" && <p className="text-xs text-red-600 mt-1">Lookup failed — check the connection and try again.</p>}
             </div>
           )}
 

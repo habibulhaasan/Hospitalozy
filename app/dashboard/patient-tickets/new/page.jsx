@@ -2,7 +2,7 @@
 
 import PermissionGate from "@/components/shared/PermissionGate";
 import PatientBillingComponent from "@/components/patient-billing/PatientBillingComponent";
-import { lookupPatientByIdOrMobile, savePatient } from "@/lib/firestore/patients";
+import { lookupPatientByIdOrMobile, searchPatients, savePatient } from "@/lib/firestore/patients";
 import { loadActiveDoctorNames } from "@/lib/firestore/doctors";
 import { saveTicket } from "@/lib/firestore/tickets";
 
@@ -11,6 +11,7 @@ export default function NewPatientTicketPage() {
     <PermissionGate module="billing">
       <PatientBillingComponent
         onLookupPatientByIdOrMobile={lookupPatientByIdOrMobile}
+        onSearchPatients={searchPatients}
         onSavePatient={savePatient}
         onLoadDoctors={loadActiveDoctorNames}
         onSaveBill={saveTicket}
