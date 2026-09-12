@@ -752,7 +752,7 @@ export default function LabReportComponent({
                             <td className="py-1 pr-2">
                               <span className="inline-flex items-center gap-1">
                                 <input
-                                  className={`w-16 bg-transparent border-b border-slate-300 outline-none font-semibold print:border-slate-300 ${
+                                  className={`w-16 bg-white border border-slate-300 rounded px-1 outline-none font-semibold print:border-none print:p-0 print:m-0 print:bg-transparent ${
                                     flag === "H" || flag === "L" ? "text-red-600" : ""
                                   }`}
                                   value={result}
@@ -808,7 +808,7 @@ export default function LabReportComponent({
                         <tr key={row.id} className="border-b border-slate-100">
                           <td className="py-1 pr-2">
                             <input
-                              className="w-full bg-transparent border-b border-slate-200 outline-none print:border-slate-300"
+                              className="w-full bg-white border border-slate-300 rounded px-1 py-0.5 outline-none print:border-none print:p-0 print:m-0 print:bg-transparent"
                               placeholder="Test name"
                               value={row.name}
                               onChange={(e) => updateExtraRow(page.pageId, row.id, "name", e.target.value)}
@@ -816,21 +816,21 @@ export default function LabReportComponent({
                           </td>
                           <td className="py-1 pr-2">
                             <input
-                              className="w-full bg-transparent border-b border-slate-200 outline-none font-semibold print:border-slate-300"
+                              className="w-full bg-white border border-slate-300 rounded px-1 py-0.5 outline-none font-semibold print:border-none print:p-0 print:m-0 print:bg-transparent"
                               value={row.result}
                               onChange={(e) => updateExtraRow(page.pageId, row.id, "result", e.target.value)}
                             />
                           </td>
                           <td className="py-1 pr-2">
                             <input
-                              className="w-full bg-transparent border-b border-slate-200 outline-none print:border-slate-300"
+                              className="w-full bg-white border border-slate-300 rounded px-1 py-0.5 outline-none print:border-none print:p-0 print:m-0 print:bg-transparent"
                               value={row.unit}
                               onChange={(e) => updateExtraRow(page.pageId, row.id, "unit", e.target.value)}
                             />
                           </td>
                           <td className="py-1">
                             <input
-                              className="w-full bg-transparent border-b border-slate-200 outline-none text-slate-500 print:border-slate-300"
+                              className="w-full bg-white border border-slate-300 rounded px-1 py-0.5 outline-none text-slate-500 print:border-none print:p-0 print:m-0 print:bg-transparent"
                               placeholder="Normal value"
                               value={row.normal}
                               onChange={(e) => updateExtraRow(page.pageId, row.id, "normal", e.target.value)}
