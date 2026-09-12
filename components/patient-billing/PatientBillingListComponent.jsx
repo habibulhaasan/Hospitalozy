@@ -217,7 +217,7 @@ export default function PatientBillingListComponent({
 
       {/* ============ VIEW / REPRINT OVERLAY ============ */}
       {selected && (
-        <div className="fixed inset-0 bg-black/40 z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/40 z-50 overflow-y-auto print:static print:bg-transparent print:overflow-visible">
           <div className="no-print sticky top-0 bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between max-w-[8.27in] mx-auto">
             <span className="text-sm font-medium">{selected.patient?.name || "Ticket"} — {selected.billNo}</span>
             <div className="flex gap-2">

@@ -358,9 +358,9 @@ export default function LabReportListComponent({
         </div>
       </div>
 
-      {/* ============ VIEW / REPRINT OVERLAY ============ */}
+      {/* ============ MODAL FOR REPRINT ============ */}
       {selected && (
-        <div className="fixed inset-0 bg-black/40 z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/40 z-50 overflow-y-auto print:static print:bg-transparent print:overflow-visible">
           <div className="no-print sticky top-0 bg-white border-b border-slate-200 px-4 py-2 flex items-center justify-between max-w-[210mm] mx-auto">
             <span className="text-sm font-medium">{selected.patient?.name || "Report"} — {selected.patient?.regNo || ""}</span>
             <div className="flex gap-2">
@@ -378,10 +378,8 @@ export default function LabReportListComponent({
                 style={{
                   width: "210mm",
                   minHeight: "297mm",
-                  maxHeight: "297mm",
                   padding: "12mm 14mm",
                   boxSizing: "border-box",
-                  overflow: "hidden",
                   ...(isLast ? {} : { breakAfter: "page", pageBreakAfter: "always" }),
                 }}
               >
