@@ -111,6 +111,8 @@ export default function LabReportListComponent({
   onSearchReports = async () => [],
   onUpdateStatus = async () => true,
   onMarkPrinted = async () => true,
+  onLoadTechnologists = async () => [],
+  onLoadPathologists = async () => [],
   hospitalName: fallbackHospitalName = "Upazila Health Complex",
   hospitalAddress: fallbackHospitalAddress = "",
 } = {}) {
@@ -125,8 +127,13 @@ export default function LabReportListComponent({
 
   const [selected, setSelected] = useState(null); // the report record currently being viewed/reprinted
   const [pendingStatuses, setPendingStatuses] = useState({}); // track unsaved status changes
+  const [technologistOptions, setTechnologistOptions] = useState([]);
+  const [pathologistOptions, setPathologistOptions] = useState([]);
 
   useEffect(() => {
+    onLoadTechnologists().then(setTechnologistOptions).catch(() => {});
+    onLoadPathologists().then(setPathologistOptions).catch(() => {});
+    
     onLoadRecentReports(50)
       .then((list) => {
         setReports(Array.isArray(list) ? list : []);
@@ -453,23 +460,45 @@ export default function LabReportListComponent({
                   </div>
                 )}
 
-                {isLast && (
-                  <>
-                    <div className="flex justify-between items-end mt-auto pt-8 text-xs">
-                      <div className="text-center">
-                        <div className="text-xs mb-6">{selected.technologist || "\u00A0"}</div>
-                        <div className="border-t border-slate-400 pt-1 w-40">Lab Technologist</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs mb-6">{selected.pathologist || "\u00A0"}</div>
-                        <div className="border-t border-slate-400 pt-1 w-40">Pathologist / Consultant</div>
-                      </div>
+                <div className="flex justify-between items-start mt-auto pt-16 text-xs">
+                  <div className="text-center w-56">
+                    <div className="border-t border-slate-400 pt-1">
+                      <div className="font-bold text-slate-800">{selected.technologist || "\u00A0"}</div>
+                      {(() => {
+                        const techObj = technologistOptions.find(t => t.name === selected.technologist);
+                        if (!techObj && !selected.technologist) return <div className="text-slate-500">Lab Technologist</div>;
+                        if (!techObj) return <div className="text-slate-500">Medical Technologist</div>;
+                        return (
+                          <>
+                            {techObj.qualifications && <div className="text-[10px] text-slate-600">{Array.isArray(techObj.qualifications) ? techObj.qualifications.join(", ") : techObj.qualifications}</div>}
+                            <div className="text-[10px] text-slate-500">{techObj.designation || "Medical Technologist"}</div>
+                          </>
+                        );
+                      })()}
                     </div>
-                    <div className="text-[9px] text-slate-400 text-center mt-3">
-                      Reference ranges are general adult values (with a broad pediatric band where noted) and may vary by analyzer/method — correlate clinically.
+                  </div>
+                  <div className="text-center w-56">
+                    <div className="border-t border-slate-400 pt-1">
+                      <div className="font-bold text-slate-800">{selected.pathologist || "\u00A0"}</div>
+                      {(() => {
+                        const pathObj = pathologistOptions.find(p => p.name === selected.pathologist);
+                        if (!pathObj && !selected.pathologist) return <div className="text-slate-500">Pathologist / Consultant</div>;
+                        if (!pathObj) return <div className="text-slate-500">Pathologist / Consultant</div>;
+                        return (
+                          <>
+                            {pathObj.qualifications && <div className="text-[10px] text-slate-600">{Array.isArray(pathObj.qualifications) ? pathObj.qualifications.join(", ") : pathObj.qualifications}</div>}
+                            <div className="text-[10px] text-slate-500">
+                              {pathObj.designation ? `${pathObj.designation}, ` : ""}{pathObj.specialty || "Pathology"}
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
-                  </>
-                )}
+                  </div>
+                </div>
+                <div className="text-[9px] text-slate-400 text-center mt-3">
+                  Reference ranges are general adult values (with a broad pediatric band where noted) and may vary by analyzer/method — correlate clinically.
+                </div>
 
                 <div className="text-[9px] text-slate-300 text-right mt-1">Page {idx + 1} of {selectedPages.length}</div>
                 {idx === 0 && <div className="no-print text-[10px] text-amber-600 text-center mt-1">Reprint — original report/collection dates shown above.</div>}

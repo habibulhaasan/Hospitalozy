@@ -87,6 +87,7 @@ const BLANK_EMPLOYEE = {
   gender: "Male",
   dob: "",
   nid: "",
+  qualifications: "",
   bloodGroup: "",
   address: "",
   joiningDate: "",
@@ -451,6 +452,7 @@ export default function EmployeeComponent({
                 <div><span className="text-slate-500">Email:</span> <b>{viewEmployee.email || "—"}</b></div>
                 <div><span className="text-slate-500">Gender:</span> <b>{viewEmployee.gender || "—"}</b></div>
                 <div><span className="text-slate-500">Blood Group:</span> <b>{viewEmployee.bloodGroup || "—"}</b></div>
+                <div className="col-span-2"><span className="text-slate-500">Qualifications:</span> <b>{viewEmployee.qualifications || "—"}</b></div>
                 <div><span className="text-slate-500">NID:</span> <b>{viewEmployee.nid || "—"}</b></div>
                 <div><span className="text-slate-500">Joining Date:</span> <b>{viewEmployee.joiningDate || "—"}</b></div>
                 <div className="col-span-2"><span className="text-slate-500">Address:</span> <b>{viewEmployee.address || "—"}</b></div>
@@ -557,9 +559,15 @@ export default function EmployeeComponent({
                       ))}
                     </select>
                   </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 mb-3">
                   <div>
                     <label className="text-xs text-slate-500 block mb-1">NID</label>
                     <input className="border rounded px-2 py-1.5 text-sm w-full" value={draft.nid} onChange={(e) => setDraft({ ...draft, nid: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-500 block mb-1">Qualifications / Degrees</label>
+                    <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="e.g. BSc, Diploma" value={draft.qualifications || ""} onChange={(e) => setDraft({ ...draft, qualifications: e.target.value })} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3 mb-3">

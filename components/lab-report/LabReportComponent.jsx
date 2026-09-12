@@ -857,7 +857,7 @@ export default function LabReportComponent({
                 </div>
               )}
 
-              <div className="flex justify-between items-end mt-auto pt-16 text-xs">
+              <div className="flex justify-between items-start mt-auto pt-16 text-xs">
                 <div className="text-center w-56">
                   <div className="border-t border-slate-400 pt-1">
                     <div className="font-bold text-slate-800">{technologist || "\u00A0"}</div>
@@ -884,7 +884,9 @@ export default function LabReportComponent({
                       return (
                         <>
                           {pathObj.qualifications && <div className="text-[10px] text-slate-600">{Array.isArray(pathObj.qualifications) ? pathObj.qualifications.join(", ") : pathObj.qualifications}</div>}
-                          <div className="text-[10px] text-slate-500">{pathObj.specialty || "Pathology"}</div>
+                          <div className="text-[10px] text-slate-500">
+                            {pathObj.designation ? `${pathObj.designation}, ` : ""}{pathObj.specialty || "Pathology"}
+                          </div>
                         </>
                       );
                     })()}
