@@ -697,10 +697,8 @@ export default function LabReportComponent({
               style={{
                 width: "210mm",
                 minHeight: "297mm",
-                maxHeight: "297mm",
                 padding: "12mm 14mm",
                 boxSizing: "border-box",
-                overflow: "hidden",
                 ...(isLast ? {} : { breakAfter: "page", pageBreakAfter: "always" }),
               }}
             >
