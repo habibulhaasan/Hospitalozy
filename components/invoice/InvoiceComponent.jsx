@@ -46,7 +46,7 @@ export default function InvoiceComponent({
   const [invoiceNumber, setInvoiceNumber] = useState(generateInvoiceNumber);
   const [billDateTime, setBillDateTime] = useState(() => new Date());
 
-  const [patientMode, setPatientMode] = useState("existing");
+  const [patientMode, setPatientMode] = useState("new");
   const [lookupQuery, setLookupQuery] = useState("");
   const [lookupStatus, setLookupStatus] = useState("");
   const [patient, setPatient] = useState(DEFAULT_PATIENT);
