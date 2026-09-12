@@ -38,6 +38,8 @@ export default function PrintableInvoice({
   setDiscount,
   received,
   setReceived,
+  paymentMode,
+  setPaymentMode,
   doctorOptions,
 }) {
   return (
@@ -106,6 +108,8 @@ export default function PrintableInvoice({
           setDiscount={setDiscount}
           received={received}
           setReceived={setReceived}
+          paymentMode={paymentMode}
+          setPaymentMode={setPaymentMode}
         />
       </div>
 

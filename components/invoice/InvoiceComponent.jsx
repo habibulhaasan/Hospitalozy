@@ -57,6 +57,7 @@ export default function InvoiceComponent({
   const [previousDue, setPreviousDue] = useState("0");
   const [discount, setDiscount] = useState("0");
   const [received, setReceived] = useState("0");
+  const [paymentMode, setPaymentMode] = useState("paid"); // "paid" | "partial" | "due"
 
   const [agentOptions, setAgentOptions] = useState([]);
   const [selectedAgentName, setSelectedAgentName] = useState("");
@@ -134,6 +135,7 @@ export default function InvoiceComponent({
     setPreviousDue("0");
     setDiscount("0");
     setReceived("0");
+    setPaymentMode("paid");
     setSaveInvoiceStatus("");
     setConfirmingReset(false);
   }
@@ -142,9 +144,17 @@ export default function InvoiceComponent({
     const total = lineItems.reduce((s, it) => s + (Number(it.rate) || 0) * (Number(it.qty) || 0), 0);
     const payable = total + (Number(previousDue) || 0);
     const netBill = payable - (Number(discount) || 0);
-    const due = netBill - (Number(received) || 0);
-    return { total, payable, netBill, due };
-  }, [lineItems, previousDue, discount, received]);
+    
+    let actualReceived = Number(received) || 0;
+    if (paymentMode === "paid") {
+      actualReceived = netBill;
+    } else if (paymentMode === "due") {
+      actualReceived = 0;
+    }
+
+    const due = netBill - actualReceived;
+    return { total, payable, netBill, due, received: actualReceived };
+  }, [lineItems, previousDue, discount, received, paymentMode]);
 
   const status = useMemo(() => {
     if (totals.netBill <= 0) return "FREE";
@@ -320,6 +330,8 @@ export default function InvoiceComponent({
         setDiscount={setDiscount}
         received={received}
         setReceived={setReceived}
+        paymentMode={paymentMode}
+        setPaymentMode={setPaymentMode}
         doctorOptions={doctorOptions}
       />
     </div>
