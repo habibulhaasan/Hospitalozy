@@ -153,7 +153,15 @@ export default function InvoiceComponent({
     }
 
     const due = netBill - actualReceived;
-    return { total, payable, netBill, due, received: actualReceived };
+    return { 
+      total, 
+      payable, 
+      netBill, 
+      due, 
+      received: actualReceived,
+      previousDue: Number(previousDue) || 0,
+      discount: Number(discount) || 0 
+    };
   }, [lineItems, previousDue, discount, received, paymentMode]);
 
   const status = useMemo(() => {

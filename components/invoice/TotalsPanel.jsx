@@ -10,7 +10,7 @@
 import React from "react";
 import { formatMoney } from "@/lib/format";
 
-export default function TotalsPanel({ totals, previousDue, setPreviousDue, discount, setDiscount, received, setReceived, paymentMode = "paid", setPaymentMode = () => {} }) {
+export default function TotalsPanel({ totals, previousDue, setPreviousDue, discount, setDiscount, received, setReceived, paymentMode = "paid", setPaymentMode = () => {}, readOnly = false }) {
   return (
     <table className="text-xs w-72">
       <tbody>
@@ -21,12 +21,16 @@ export default function TotalsPanel({ totals, previousDue, setPreviousDue, disco
         <tr>
           <td className="py-0.5 text-slate-500">Previous Due</td>
           <td className="py-0.5 text-right">
-            <input
-              type="number"
-              className="w-24 text-right bg-white border border-slate-300 rounded px-1 py-0.5 outline-none print:border-none print:p-0 print:m-0 print:bg-transparent"
-              value={previousDue}
-              onChange={(e) => setPreviousDue(Number(e.target.value) || 0)}
-            />
+            {readOnly ? (
+              <div className="w-24 ml-auto text-right px-1 py-0.5">{formatMoney(previousDue)}</div>
+            ) : (
+              <input
+                type="number"
+                className="w-24 text-right bg-white border border-slate-300 rounded px-1 py-0.5 outline-none print:border-none print:p-0 print:m-0 print:bg-transparent"
+                value={previousDue}
+                onChange={(e) => setPreviousDue(Number(e.target.value) || 0)}
+              />
+            )}
           </td>
         </tr>
         <tr className="border-t border-slate-200">
@@ -36,12 +40,16 @@ export default function TotalsPanel({ totals, previousDue, setPreviousDue, disco
         <tr>
           <td className="py-0.5 text-slate-500">Discount</td>
           <td className="py-0.5 text-right">
-            <input
-              type="number"
-              className="w-24 text-right bg-white border border-slate-300 rounded px-1 py-0.5 outline-none print:border-none print:p-0 print:m-0 print:bg-transparent"
-              value={discount}
-              onChange={(e) => setDiscount(Number(e.target.value) || 0)}
-            />
+            {readOnly ? (
+              <div className="w-24 ml-auto text-right px-1 py-0.5">{formatMoney(discount)}</div>
+            ) : (
+              <input
+                type="number"
+                className="w-24 text-right bg-white border border-slate-300 rounded px-1 py-0.5 outline-none print:border-none print:p-0 print:m-0 print:bg-transparent"
+                value={discount}
+                onChange={(e) => setDiscount(Number(e.target.value) || 0)}
+              />
+            )}
           </td>
         </tr>
         <tr className="border-t border-slate-300">
@@ -52,33 +60,35 @@ export default function TotalsPanel({ totals, previousDue, setPreviousDue, disco
           <td className="py-0.5 text-slate-500 align-middle">
             <div className="flex items-center gap-2">
               <span>Received</span>
-              <div className="no-print flex gap-1 bg-slate-100 rounded p-0.5 border border-slate-200">
-                <button
-                  type="button"
-                  onClick={() => setPaymentMode("paid")}
-                  className={`px-1.5 py-0.5 rounded text-[10px] font-medium leading-none ${paymentMode === "paid" ? "bg-emerald-600 text-white shadow-sm" : "text-slate-500 hover:bg-slate-200"}`}
-                >
-                  Paid
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setPaymentMode("partial"); setReceived(totals.received || 0); }}
-                  className={`px-1.5 py-0.5 rounded text-[10px] font-medium leading-none ${paymentMode === "partial" ? "bg-amber-600 text-white shadow-sm" : "text-slate-500 hover:bg-slate-200"}`}
-                >
-                  Part
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPaymentMode("due")}
-                  className={`px-1.5 py-0.5 rounded text-[10px] font-medium leading-none ${paymentMode === "due" ? "bg-red-600 text-white shadow-sm" : "text-slate-500 hover:bg-slate-200"}`}
-                >
-                  Due
-                </button>
-              </div>
+              {!readOnly && (
+                <div className="no-print flex gap-1 bg-slate-100 rounded p-0.5 border border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMode("paid")}
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-medium leading-none ${paymentMode === "paid" ? "bg-emerald-600 text-white shadow-sm" : "text-slate-500 hover:bg-slate-200"}`}
+                  >
+                    Paid
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setPaymentMode("partial"); setReceived(totals.received || 0); }}
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-medium leading-none ${paymentMode === "partial" ? "bg-amber-600 text-white shadow-sm" : "text-slate-500 hover:bg-slate-200"}`}
+                  >
+                    Part
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMode("due")}
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-medium leading-none ${paymentMode === "due" ? "bg-red-600 text-white shadow-sm" : "text-slate-500 hover:bg-slate-200"}`}
+                  >
+                    Due
+                  </button>
+                </div>
+              )}
             </div>
           </td>
           <td className="py-0.5 text-right align-middle">
-            {paymentMode === "partial" ? (
+            {(!readOnly && paymentMode === "partial") ? (
               <input
                 type="number"
                 className="w-24 text-right bg-white border border-slate-300 rounded px-1 py-0.5 outline-none print:border-none print:p-0 print:m-0 print:bg-transparent"
@@ -86,7 +96,7 @@ export default function TotalsPanel({ totals, previousDue, setPreviousDue, disco
                 onChange={(e) => setReceived(Number(e.target.value) || 0)}
               />
             ) : (
-              <div className="w-24 ml-auto text-right bg-slate-50 border border-slate-200 rounded px-1 py-0.5 print:border-none print:bg-transparent print:p-0 print:m-0">
+              <div className={`w-24 ml-auto text-right ${!readOnly ? "bg-slate-50 border border-slate-200 rounded" : ""} px-1 py-0.5 print:border-none print:bg-transparent print:p-0 print:m-0`}>
                 {formatMoney(totals.received || 0)}
               </div>
             )}

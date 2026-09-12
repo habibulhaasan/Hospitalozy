@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import Barcode from "@/components/shared/Barcode";
 import { formatMoney, numberToWordsBDT, fmtDate, fmtDateTime } from "@/lib/format";
+import TotalsPanel from "./TotalsPanel";
 
 /* numberToWordsBDT/formatMoney/fmtDate/fmtDateTime and the barcode
  * renderer were previously all duplicated directly in this file
@@ -50,6 +51,7 @@ const STATUS_STYLE = {
 export default function InvoiceListComponent({
   onLoadRecentInvoices = async () => [],
   onSearchInvoices = async () => [],
+  onUpdateInvoice = async () => false,
   hospitalName: fallbackHospitalName = "Upazila Health Complex",
   hospitalAddress: fallbackHospitalAddress = "",
 } = {}) {
@@ -64,6 +66,13 @@ export default function InvoiceListComponent({
   const [searchStatus, setSearchStatus] = useState(""); // "", "searching", "error"
 
   const [selected, setSelected] = useState(null); // the invoice record currently being viewed/reprinted
+  
+  const [isEditingPayment, setIsEditingPayment] = useState(false);
+  const [editPreviousDue, setEditPreviousDue] = useState("0");
+  const [editDiscount, setEditDiscount] = useState("0");
+  const [editReceived, setEditReceived] = useState("0");
+  const [editPaymentMode, setEditPaymentMode] = useState("paid");
+  const [saveStatus, setSaveStatus] = useState("");
 
   useEffect(() => {
     onLoadRecentInvoices(50)
@@ -119,6 +128,67 @@ export default function InvoiceListComponent({
 
   function handlePrint() {
     window.print();
+  }
+
+  function handleEditPaymentStart() {
+    setIsEditingPayment(true);
+    setEditPreviousDue(String(selected.totals?.previousDue || 0));
+    setEditDiscount(String(selected.totals?.discount || 0));
+    
+    const rec = selected.totals?.received || 0;
+    setEditReceived(String(rec));
+    
+    const nb = selected.totals?.netBill || 0;
+    if (rec === 0 && nb > 0) {
+      setEditPaymentMode("due");
+    } else if (Math.abs(rec - nb) < 0.01 && nb > 0) {
+      setEditPaymentMode("paid");
+    } else if (nb <= 0) {
+      setEditPaymentMode("paid");
+    } else {
+      setEditPaymentMode("partial");
+    }
+  }
+
+  const editTotals = useMemo(() => {
+    if (!selected) return null;
+    const total = selected.lineItems.reduce((s, it) => s + (Number(it.rate) || 0) * (Number(it.qty) || 0), 0);
+    const payable = total + (Number(editPreviousDue) || 0);
+    const netBill = payable - (Number(editDiscount) || 0);
+    
+    let actualReceived = Number(editReceived) || 0;
+    if (editPaymentMode === "paid") {
+      actualReceived = netBill;
+    } else if (editPaymentMode === "due") {
+      actualReceived = 0;
+    }
+    const due = netBill - actualReceived;
+    return { total, payable, netBill, due, received: actualReceived, previousDue: Number(editPreviousDue) || 0, discount: Number(editDiscount) || 0 };
+  }, [selected, editPreviousDue, editDiscount, editReceived, editPaymentMode]);
+
+  async function handleSavePayment() {
+    setSaveStatus("saving");
+    try {
+      let newStatus = "PAID";
+      if (editTotals.netBill <= 0) newStatus = "FREE";
+      else if (editTotals.due > 0.004) newStatus = "DUE";
+
+      const payload = {
+        totals: editTotals,
+        status: newStatus
+      };
+      await onUpdateInvoice(selected.id, payload);
+      
+      const updated = { ...selected, ...payload };
+      setSelected(updated);
+      setInvoices((prev) => prev.map(inv => inv.id === updated.id ? updated : inv));
+      
+      setIsEditingPayment(false);
+      setSaveStatus("");
+    } catch (err) {
+      console.error(err);
+      setSaveStatus("error");
+    }
   }
 
   return (
@@ -229,24 +299,44 @@ export default function InvoiceListComponent({
       {selected && (
         <div className="fixed inset-0 bg-black/40 z-50 overflow-y-auto print:static print:bg-transparent print:overflow-visible">
           <div className="no-print sticky top-0 bg-white border-b border-slate-200 px-4 py-2 flex items-center justify-between max-w-[210mm] mx-auto">
-            <span className="text-sm font-medium">Invoice {selected.invoiceNumber}</span>
-            <div className="flex gap-2">
-              <button onClick={handlePrint} className="text-sm bg-slate-800 text-white px-4 py-1.5 rounded">Print / Reprint</button>
-              <button onClick={() => setSelected(null)} className="text-sm border border-slate-300 text-slate-600 px-3 py-1.5 rounded">Close</button>
+              <span className="text-sm font-medium">Invoice {selected.invoiceNumber}</span>
+              <div className="flex gap-2">
+                {isEditingPayment ? (
+                  <>
+                    <button onClick={handleSavePayment} disabled={saveStatus === "saving"} className="text-sm bg-emerald-700 text-white px-4 py-1.5 rounded">{saveStatus === "saving" ? "Saving..." : "Save Payment"}</button>
+                    <button onClick={() => setIsEditingPayment(false)} className="text-sm border border-slate-300 text-slate-600 px-3 py-1.5 rounded">Cancel</button>
+                  </>
+                ) : (
+                  <>
+                    <button onClick={handleEditPaymentStart} className="text-sm border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-1.5 rounded">Update Payment</button>
+                    <button onClick={handlePrint} className="text-sm bg-slate-800 text-white px-4 py-1.5 rounded">Print / Reprint</button>
+                    <button onClick={() => setSelected(null)} className="text-sm border border-slate-300 text-slate-600 px-3 py-1.5 rounded">Close</button>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
 
           <div
             className="print-page bg-white shadow-lg my-4 mx-auto print:my-0 print:shadow-none relative"
             style={{ width: "210mm", minHeight: "297mm", padding: "12mm 14mm", boxSizing: "border-box" }}
           >
-            <div className={`absolute top-[12mm] right-[14mm] border-2 rounded px-4 py-1 text-lg font-bold tracking-widest ${
-              selected.status === "PAID" ? "bg-emerald-50 border-emerald-500 text-emerald-700"
-              : selected.status === "DUE" ? "bg-red-50 border-red-500 text-red-700"
-              : "bg-slate-100 border-slate-400 text-slate-600"
-            }`}>
-              {selected.status}
-            </div>
+            {(() => {
+              let displayStatus = selected.status;
+              if (isEditingPayment && editTotals) {
+                if (editTotals.netBill <= 0) displayStatus = "FREE";
+                else if (editTotals.due > 0.004) displayStatus = "DUE";
+                else displayStatus = "PAID";
+              }
+              return (
+                <div className={`absolute top-[12mm] right-[14mm] border-2 rounded px-4 py-1 text-lg font-bold tracking-widest ${
+                  displayStatus === "PAID" ? "bg-emerald-50 border-emerald-500 text-emerald-700"
+                  : displayStatus === "DUE" ? "bg-red-50 border-red-500 text-red-700"
+                  : "bg-slate-100 border-slate-400 text-slate-600"
+                }`}>
+                  {displayStatus}
+                </div>
+              );
+            })()}
 
             <div className="text-center border-b-2 border-slate-800 pb-2 mb-3">
               <div className="text-xl font-bold tracking-wide">{selected.hospitalName || fallbackHospitalName}</div>
@@ -303,32 +393,22 @@ export default function InvoiceListComponent({
             </table>
 
             <div className="flex justify-end mb-2">
-              <table className="text-xs w-64">
-                <tbody>
-                  <tr>
-                    <td className="py-0.5 text-slate-500">Total</td>
-                    <td className="py-0.5 text-right font-medium">{formatMoney(selected.totals?.total)}</td>
-                  </tr>
-                  <tr className="border-t border-slate-300">
-                    <td className="py-0.5 text-slate-500">Payable</td>
-                    <td className="py-0.5 text-right font-medium">{formatMoney(selected.totals?.payable)}</td>
-                  </tr>
-                  <tr className="border-t border-slate-300">
-                    <td className="py-0.5 font-semibold">Net Bill</td>
-                    <td className="py-0.5 text-right font-bold">{formatMoney(selected.totals?.netBill)}</td>
-                  </tr>
-                  <tr className="border-t border-slate-300">
-                    <td className="py-0.5 font-semibold">Due</td>
-                    <td className={`py-0.5 text-right font-bold ${(selected.totals?.due || 0) > 0.004 ? "text-red-600" : ""}`}>
-                      {formatMoney(Math.max(selected.totals?.due || 0, 0))}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              <TotalsPanel
+                totals={isEditingPayment ? editTotals : selected.totals}
+                previousDue={isEditingPayment ? editPreviousDue : selected.totals?.previousDue || 0}
+                setPreviousDue={setEditPreviousDue}
+                discount={isEditingPayment ? editDiscount : selected.totals?.discount || 0}
+                setDiscount={setEditDiscount}
+                received={isEditingPayment ? editReceived : selected.totals?.received || 0}
+                setReceived={setEditReceived}
+                paymentMode={editPaymentMode}
+                setPaymentMode={setEditPaymentMode}
+                readOnly={!isEditingPayment}
+              />
             </div>
 
             <div className="text-xs italic border-t border-slate-200 pt-2 mb-8">
-              In Words: {numberToWordsBDT(selected.totals?.netBill)}
+              In Words: {numberToWordsBDT(isEditingPayment ? editTotals?.netBill : selected.totals?.netBill)}
             </div>
 
             <div className="flex justify-between items-end absolute bottom-[12mm] left-[14mm] right-[14mm] text-xs">
