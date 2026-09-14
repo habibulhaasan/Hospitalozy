@@ -24,6 +24,7 @@
  *   />
  * ------------------------------------------------------------------ */
 import React, { useState, useMemo, useEffect } from "react";
+import Pagination from "@/components/shared/Pagination";
 import DoctorFilters from "./DoctorFilters";
 import DoctorTable from "./DoctorTable";
 import DoctorModal from "./DoctorModal";
@@ -32,14 +33,22 @@ import { BLANK_DOCTOR, generateDoctorId } from "./doctorShape";
 
 export default function DoctorComponent({
   onLoadDoctors = async () => [],
+  onLoadDoctorsPage = async () => ({}),
   onSaveDoctor = async (doctorData) => ({ ...doctorData, id: doctorData.id || generateDoctorId() }),
   onDeleteDoctor = async () => true,
 } = {}) {
   const [doctors, setDoctors] = useState([]);
   const [loadStatus, setLoadStatus] = useState("loading");
+  const [mode, setMode] = useState("recent"); // "recent" | "search"
 
   const [search, setSearch] = useState("");
   const [specialtyFilter, setSpecialtyFilter] = useState("All");
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [cursorStack, setCursorStack] = useState([]);
+  const [lastRawDoc, setLastRawDoc] = useState(null);
+  const [pageLoading, setPageLoading] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [draft, setDraft] = useState(BLANK_DOCTOR);
@@ -50,16 +59,63 @@ export default function DoctorComponent({
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   useEffect(() => {
-    onLoadDoctors()
-      .then((list) => {
-        setDoctors(Array.isArray(list) ? list : []);
-        setLoadStatus("loaded");
-      })
-      .catch(() => setLoadStatus("error"));
+    loadPage(null, 1, []);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  async function loadPage(cursor, pageNum, stack) {
+    setPageLoading(true);
+    if (doctors.length === 0) setLoadStatus("loading");
+    try {
+      const result = await onLoadDoctorsPage({ cursor });
+      setDoctors(result.data);
+      setHasMore(result.hasMore);
+      setCurrentPage(pageNum);
+      setCursorStack(stack);
+      setLastRawDoc(result.lastDoc);
+      setLoadStatus("loaded");
+      setMode("recent");
+    } catch {
+      setLoadStatus("error");
+    } finally {
+      setPageLoading(false);
+    }
+  }
+
+  function handleNext() {
+    loadPage(lastRawDoc, currentPage + 1, [...cursorStack, lastRawDoc]);
+  }
+
+  function handlePrev() {
+    const newStack = cursorStack.slice(0, -1);
+    const cursor = newStack.length > 0 ? newStack[newStack.length - 1] : null;
+    loadPage(cursor, currentPage - 1, newStack);
+  }
+
+  const isSearchActive = search.trim() !== "" || specialtyFilter !== "All";
+
+  useEffect(() => {
+    let cancelled = false;
+    if (isSearchActive && mode === "recent") {
+      setLoadStatus("loading");
+      onLoadDoctors().then((allDocs) => {
+        if (!cancelled) {
+          setDoctors(allDocs);
+          setMode("search");
+          setLoadStatus("loaded");
+        }
+      });
+    } else if (!isSearchActive && mode === "search") {
+      loadPage(null, 1, []);
+    }
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSearchActive, mode]);
+
   const filteredDoctors = useMemo(() => {
+    if (mode === "recent") return doctors; // Don't filter the paginated list locally
     const term = search.trim().toLowerCase();
     return doctors.filter((d) => {
       const matchesTerm =
@@ -71,7 +127,7 @@ export default function DoctorComponent({
       const matchesSpecialty = specialtyFilter === "All" || d.specialty === specialtyFilter;
       return matchesTerm && matchesSpecialty;
     });
-  }, [doctors, search, specialtyFilter]);
+  }, [doctors, search, specialtyFilter, mode]);
 
   function openAddModal() {
     setDraft({ ...BLANK_DOCTOR, id: "" });
@@ -148,6 +204,16 @@ export default function DoctorComponent({
             onCancelDelete={() => setConfirmDeleteId(null)}
           />
         </div>
+        {mode === "recent" && (
+          <Pagination
+            currentPage={currentPage}
+            hasMore={hasMore}
+            onPrev={handlePrev}
+            onNext={handleNext}
+            loading={pageLoading}
+            totalOnPage={doctors.length}
+          />
+        )}
       </div>
 
       {viewDoctor && (

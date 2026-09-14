@@ -2,12 +2,13 @@
 
 import PermissionGate from "@/components/shared/PermissionGate";
 import EmployeeComponent from "@/components/employee/EmployeeComponent";
-import { loadEmployees, saveEmployee, deleteEmployee, createEmployeeAccount, sendEmployeePasswordResetEmail, setEmployeeTemporaryPassword, setEmployeeAccountDisabled } from "@/lib/firestore/employees";
+import { loadEmployees, saveEmployee, deleteEmployee, createEmployeeAccount, sendEmployeePasswordResetEmail, setEmployeeTemporaryPassword, setEmployeeAccountDisabled, loadEmployeesPage } from "@/lib/firestore/employees";
 
 export default function EmployeesPage() {
   return (
     <PermissionGate module="employees">
       <EmployeeComponent
+        onLoadEmployeesPage={loadEmployeesPage}
         onLoadEmployees={loadEmployees}
         onSaveEmployee={saveEmployee}
         onDeleteEmployee={deleteEmployee}

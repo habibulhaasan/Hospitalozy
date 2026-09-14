@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 /**
  * components/patient/PatientComponent.jsx
@@ -34,6 +34,7 @@
  *   />
  * ------------------------------------------------------------------ */
 import React, { useState, useEffect } from "react";
+import Pagination from "@/components/shared/Pagination";
 import PatientFilters from "./PatientFilters";
 import PatientTable from "./PatientTable";
 import PatientDetailModal from "./PatientDetailModal";
@@ -45,11 +46,19 @@ export default function PatientComponent({
   onSearchPatients = async () => [],
   onSavePatient = async (patientData) => patientData.patientId,
   onLoadDoctors = async () => [],
+  onLoadPatientsPage = async () => ({}),
 } = {}) {
   const [patients, setPatients] = useState([]);
   const [loadStatus, setLoadStatus] = useState("loading");
   const [search, setSearch] = useState("");
   const [searching, setSearching] = useState(false);
+  const [mode, setMode] = useState("recent"); // "recent" | "search"
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [cursorStack, setCursorStack] = useState([]);
+  const [lastRawDoc, setLastRawDoc] = useState(null);
+  const [pageLoading, setPageLoading] = useState(false);
 
   const [doctorOptions, setDoctorOptions] = useState([]);
   const [viewPatient, setViewPatient] = useState(null);
@@ -58,37 +67,71 @@ export default function PatientComponent({
 
   useEffect(() => {
     onLoadDoctors().then(setDoctorOptions).catch(() => {});
-    onLoadPatients()
-      .then((list) => {
-        setPatients(Array.isArray(list) ? list : []);
-        setLoadStatus("loaded");
-      })
-      .catch(() => setLoadStatus("error"));
+    loadPage(null, 1, []);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Search is server-side here (unlike Doctor's client-side filter)
-  // since a hospital's patient list can get large fast — debounced by
-  // just re-querying on every change rather than filtering an
-  // already-loaded array in memory.
+  async function loadPage(cursor, pageNum, stack) {
+    setPageLoading(true);
+    setMode("recent");
+    if (patients.length === 0) setLoadStatus("loading");
+    try {
+      const result = await onLoadPatientsPage({ cursor });
+      setPatients(result.data);
+      setHasMore(result.hasMore);
+      setCurrentPage(pageNum);
+      setCursorStack(stack);
+      setLastRawDoc(result.lastDoc);
+      setLoadStatus("loaded");
+    } catch {
+      setLoadStatus("error");
+    } finally {
+      setPageLoading(false);
+    }
+  }
+
+  function handleNext() {
+    loadPage(lastRawDoc, currentPage + 1, [...cursorStack, lastRawDoc]);
+  }
+
+  function handlePrev() {
+    const newStack = cursorStack.slice(0, -1);
+    const cursor = newStack.length > 0 ? newStack[newStack.length - 1] : null;
+    loadPage(cursor, currentPage - 1, newStack);
+  }
+
+  // Debounced Search
   useEffect(() => {
     let cancelled = false;
+    // Don't search if it's empty and we are already in recent mode
+    if (!search.trim() && mode === "recent") return;
+
     setSearching(true);
     const handle = setTimeout(() => {
-      (search.trim() ? onSearchPatients(search.trim()) : onLoadPatients())
-        .then((list) => {
-          if (!cancelled) {
-            setPatients(Array.isArray(list) ? list : []);
-            setLoadStatus("loaded");
-            setSearching(false);
-          }
-        })
-        .catch(() => {
-          if (!cancelled) {
-            setLoadStatus("error");
-            setSearching(false);
-          }
-        });
+      if (search.trim()) {
+        onSearchPatients(search.trim())
+          .then((list) => {
+            if (!cancelled) {
+              setMode("search");
+              setPatients(Array.isArray(list) ? list : []);
+              setLoadStatus("loaded");
+              setSearching(false);
+            }
+          })
+          .catch(() => {
+            if (!cancelled) {
+              setLoadStatus("error");
+              setSearching(false);
+            }
+          });
+      } else {
+        // Revert to recent list if search cleared
+        if (!cancelled) {
+          loadPage(null, 1, []).then(() => {
+            if (!cancelled) setSearching(false);
+          });
+        }
+      }
     }, 300);
     return () => {
       cancelled = true;
@@ -127,7 +170,7 @@ export default function PatientComponent({
           <div>
             <h1 className="text-base font-semibold">Patients</h1>
             <p className="text-xs text-slate-500">
-              {patients.length} patient{patients.length !== 1 ? "s" : ""} {search ? "found" : "on record"}
+              {patients.length} patient{patients.length !== 1 ? "s" : ""} {mode === "search" ? "found" : "on record"}
               {searching && " — searching…"}
             </p>
           </div>
@@ -153,6 +196,16 @@ export default function PatientComponent({
             onEdit={openEdit}
           />
         </div>
+        {mode === "recent" && (
+          <Pagination
+            currentPage={currentPage}
+            hasMore={hasMore}
+            onPrev={handlePrev}
+            onNext={handleNext}
+            loading={pageLoading}
+            totalOnPage={patients.length}
+          />
+        )}
       </div>
 
       {viewPatient && (

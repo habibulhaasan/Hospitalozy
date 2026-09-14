@@ -11,12 +11,13 @@
  * don't actually enforce.
  * ------------------------------------------------------------------ */
 import PatientComponent from "@/components/patient/PatientComponent";
-import { loadPatients, searchPatients, savePatient } from "@/lib/firestore/patients";
+import { loadPatients, searchPatients, savePatient, loadPatientsPage } from "@/lib/firestore/patients";
 import { loadActiveDoctorNames } from "@/lib/firestore/doctors";
 
 export default function PatientsPage() {
   return (
     <PatientComponent
+      onLoadPatientsPage={loadPatientsPage}
       onLoadPatients={loadPatients}
       onSearchPatients={searchPatients}
       onSavePatient={savePatient}

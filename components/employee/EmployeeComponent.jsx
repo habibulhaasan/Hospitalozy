@@ -1,6 +1,7 @@
 "use client";
 
 import SearchableSelect from "@/components/shared/SearchableSelect";
+import Pagination from "@/components/shared/Pagination";
 import React, { useState, useMemo, useEffect, useRef } from "react";
 
 /* ------------------------------------------------------------------ *
@@ -155,11 +156,10 @@ const BLANK_EMPLOYEE = {
  *   onSetAccountDisabled(employee, disabled) => block/unblock login.
  *     Also requires firebase-admin (admin.auth().updateUser(uid,
  *     { disabled })) — disabling someone else's account isn't
- *     something the client SDK can do either. A disabled Auth account
- *     still exists but can no longer sign in.
  */
 export default function EmployeeComponent({
   onLoadEmployees = async () => [],
+  onLoadEmployeesPage = async () => ({}),
   onSaveEmployee = async (employeeData) => ({ ...employeeData, id: employeeData.id || generateEmployeeId() }),
   onDeleteEmployee = async () => true,
   onCreateEmployeeAccount = async () => {
@@ -171,10 +171,17 @@ export default function EmployeeComponent({
 } = {}) {
   const [employees, setEmployees] = useState([]);
   const [loadStatus, setLoadStatus] = useState("loading"); // "loading" | "loaded" | "error"
+  const [mode, setMode] = useState("recent"); // "recent" | "search"
 
   const [search, setSearch] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [cursorStack, setCursorStack] = useState([]);
+  const [lastRawDoc, setLastRawDoc] = useState(null);
+  const [pageLoading, setPageLoading] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [draft, setDraft] = useState(BLANK_EMPLOYEE);
@@ -191,16 +198,63 @@ export default function EmployeeComponent({
   const [showSetPasswordBox, setShowSetPasswordBox] = useState(false);
 
   useEffect(() => {
-    onLoadEmployees()
-      .then((list) => {
-        setEmployees(Array.isArray(list) ? list : []);
-        setLoadStatus("loaded");
-      })
-      .catch(() => setLoadStatus("error"));
+    loadPage(null, 1, []);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  async function loadPage(cursor, pageNum, stack) {
+    setPageLoading(true);
+    if (employees.length === 0) setLoadStatus("loading");
+    try {
+      const result = await onLoadEmployeesPage({ cursor });
+      setEmployees(result.data);
+      setHasMore(result.hasMore);
+      setCurrentPage(pageNum);
+      setCursorStack(stack);
+      setLastRawDoc(result.lastDoc);
+      setLoadStatus("loaded");
+      setMode("recent");
+    } catch {
+      setLoadStatus("error");
+    } finally {
+      setPageLoading(false);
+    }
+  }
+
+  function handleNext() {
+    loadPage(lastRawDoc, currentPage + 1, [...cursorStack, lastRawDoc]);
+  }
+
+  function handlePrev() {
+    const newStack = cursorStack.slice(0, -1);
+    const cursor = newStack.length > 0 ? newStack[newStack.length - 1] : null;
+    loadPage(cursor, currentPage - 1, newStack);
+  }
+
+  const isSearchActive = search.trim() !== "" || departmentFilter !== "All" || statusFilter !== "All";
+
+  useEffect(() => {
+    let cancelled = false;
+    if (isSearchActive && mode === "recent") {
+      setLoadStatus("loading");
+      onLoadEmployees().then((allDocs) => {
+        if (!cancelled) {
+          setEmployees(allDocs);
+          setMode("search");
+          setLoadStatus("loaded");
+        }
+      });
+    } else if (!isSearchActive && mode === "search") {
+      loadPage(null, 1, []);
+    }
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSearchActive, mode]);
+
   const filteredEmployees = useMemo(() => {
+    if (mode === "recent") return employees;
     const term = search.trim().toLowerCase();
     return employees.filter((e) => {
       const matchesTerm =
@@ -214,7 +268,7 @@ export default function EmployeeComponent({
       const matchesStatus = statusFilter === "All" || e.status === statusFilter;
       return matchesTerm && matchesDept && matchesStatus;
     });
-  }, [employees, search, departmentFilter, statusFilter]);
+  }, [employees, search, departmentFilter, statusFilter, mode]);
 
   function openAddModal() {
     setDraft({ ...BLANK_EMPLOYEE, id: "", permissions: { ...BLANK_PERMISSIONS } });
@@ -423,6 +477,16 @@ export default function EmployeeComponent({
             </table>
           )}
         </div>
+        {mode === "recent" && (
+          <Pagination
+            currentPage={currentPage}
+            hasMore={hasMore}
+            onPrev={handlePrev}
+            onNext={handleNext}
+            loading={pageLoading}
+            totalOnPage={employees.length}
+          />
+        )}
       </div>
 
       {/* ============ READ-ONLY DETAIL VIEW ============ *

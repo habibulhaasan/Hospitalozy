@@ -9,12 +9,13 @@
  * ------------------------------------------------------------------ */
 import PermissionGate from "@/components/shared/PermissionGate";
 import DoctorComponent from "@/components/doctor/DoctorComponent";
-import { loadDoctorRecords, saveDoctor, deleteDoctor } from "@/lib/firestore/doctors";
+import { loadDoctorRecords, saveDoctor, deleteDoctor, loadDoctorsPage } from "@/lib/firestore/doctors";
 
 export default function DoctorsPage() {
   return (
     <PermissionGate module="doctors">
       <DoctorComponent
+        onLoadDoctorsPage={loadDoctorsPage}
         onLoadDoctors={loadDoctorRecords}
         onSaveDoctor={saveDoctor}
         onDeleteDoctor={deleteDoctor}

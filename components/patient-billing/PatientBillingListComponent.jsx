@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import Field from "@/components/shared/Field";
 import Barcode from "@/components/shared/Barcode";
+import Pagination from "@/components/shared/Pagination";
 import { fmtDate, fmt12h } from "@/lib/format";
 import { OPD_DEPARTMENTS as SPECIALTIES, DEPARTMENT_BN } from "@/data/opdDepartments";
 
@@ -46,11 +47,18 @@ function BillBarcode({ value }) {
 export default function PatientBillingListComponent({
   onLoadRecentTickets = async () => [],
   onSearchTickets = async () => [],
+  onLoadTicketsPage = async () => ({}),
   hospital: fallbackHospital = defaultHospital,
 } = {}) {
   const [tickets, setTickets] = useState([]);
   const [loadStatus, setLoadStatus] = useState("loading"); // "loading" | "loaded" | "error"
   const [mode, setMode] = useState("recent"); // "recent" | "search"
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [cursorStack, setCursorStack] = useState([]);
+  const [lastRawDoc, setLastRawDoc] = useState(null);
+  const [pageLoading, setPageLoading] = useState(false);
 
   const [searchText, setSearchText] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("All");
@@ -61,14 +69,37 @@ export default function PatientBillingListComponent({
   const [selected, setSelected] = useState(null); // the ticket record currently being viewed/reprinted
 
   useEffect(() => {
-    onLoadRecentTickets(50)
-      .then((list) => {
-        setTickets(Array.isArray(list) ? list : []);
-        setLoadStatus("loaded");
-      })
-      .catch(() => setLoadStatus("error"));
+    loadPage(null, 1, []);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function loadPage(cursor, pageNum, stack) {
+    setPageLoading(true);
+    if (tickets.length === 0) setLoadStatus("loading");
+    try {
+      const result = await onLoadTicketsPage({ cursor });
+      setTickets(result.data);
+      setHasMore(result.hasMore);
+      setCurrentPage(pageNum);
+      setCursorStack(stack);
+      setLastRawDoc(result.lastDoc);
+      setLoadStatus("loaded");
+    } catch {
+      setLoadStatus("error");
+    } finally {
+      setPageLoading(false);
+    }
+  }
+
+  function handleNext() {
+    loadPage(lastRawDoc, currentPage + 1, [...cursorStack, lastRawDoc]);
+  }
+
+  function handlePrev() {
+    const newStack = cursorStack.slice(0, -1);
+    const cursor = newStack.length > 0 ? newStack[newStack.length - 1] : null;
+    loadPage(cursor, currentPage - 1, newStack);
+  }
 
   async function handleSearch() {
     setMode("search");
@@ -88,21 +119,13 @@ export default function PatientBillingListComponent({
     }
   }
 
-  async function handleBackToRecent() {
+  function handleBackToRecent() {
     setMode("recent");
     setSearchText("");
     setDepartmentFilter("All");
     setDateFrom("");
     setDateTo("");
-    setLoadStatus("loading");
-    try {
-      const list = await onLoadRecentTickets(50);
-      setTickets(Array.isArray(list) ? list : []);
-      setLoadStatus("loaded");
-    } catch (err) {
-      console.error(err);
-      setLoadStatus("error");
-    }
+    loadPage(null, 1, []);
   }
 
   const displayedTickets = useMemo(() => {
@@ -213,6 +236,16 @@ export default function PatientBillingListComponent({
             </table>
           )}
         </div>
+        {mode === "recent" && (
+          <Pagination
+            currentPage={currentPage}
+            hasMore={hasMore}
+            onPrev={handlePrev}
+            onNext={handleNext}
+            loading={pageLoading}
+            totalOnPage={tickets.length}
+          />
+        )}
       </div>
 
       {/* ============ VIEW / REPRINT OVERLAY ============ */}

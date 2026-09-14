@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import Barcode from "@/components/shared/Barcode";
+import Pagination from "@/components/shared/Pagination";
 import { formatMoney, numberToWordsBDT, fmtDate, fmtDateTime } from "@/lib/format";
 import TotalsPanel from "./TotalsPanel";
 
@@ -44,20 +45,24 @@ const STATUS_STYLE = {
  * Note on historical fidelity: hospitalName/hospitalAddress are read
  * from each saved record first, falling back to this component's own
  * props only for older records saved before the Invoice component
- * started including them — so a reprint always shows what the
- * hospital's details actually were at billing time, not whatever
- * they've since been changed to.
  */
 export default function InvoiceListComponent({
   onLoadRecentInvoices = async () => [],
   onSearchInvoices = async () => [],
   onUpdateInvoice = async () => false,
+  onLoadInvoicesPage = async () => ({}),
   hospitalName: fallbackHospitalName = "Upazila Health Complex",
   hospitalAddress: fallbackHospitalAddress = "",
 } = {}) {
   const [invoices, setInvoices] = useState([]);
   const [loadStatus, setLoadStatus] = useState("loading"); // "loading" | "loaded" | "error"
   const [mode, setMode] = useState("recent"); // "recent" | "search"
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [cursorStack, setCursorStack] = useState([]);
+  const [lastRawDoc, setLastRawDoc] = useState(null);
+  const [pageLoading, setPageLoading] = useState(false);
 
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -75,14 +80,37 @@ export default function InvoiceListComponent({
   const [saveStatus, setSaveStatus] = useState("");
 
   useEffect(() => {
-    onLoadRecentInvoices(50)
-      .then((list) => {
-        setInvoices(Array.isArray(list) ? list : []);
-        setLoadStatus("loaded");
-      })
-      .catch(() => setLoadStatus("error"));
+    loadPage(null, 1, []);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function loadPage(cursor, pageNum, stack) {
+    setPageLoading(true);
+    if (invoices.length === 0) setLoadStatus("loading");
+    try {
+      const result = await onLoadInvoicesPage({ cursor });
+      setInvoices(result.data);
+      setHasMore(result.hasMore);
+      setCurrentPage(pageNum);
+      setCursorStack(stack);
+      setLastRawDoc(result.lastDoc);
+      setLoadStatus("loaded");
+    } catch {
+      setLoadStatus("error");
+    } finally {
+      setPageLoading(false);
+    }
+  }
+
+  function handleNext() {
+    loadPage(lastRawDoc, currentPage + 1, [...cursorStack, lastRawDoc]);
+  }
+
+  function handlePrev() {
+    const newStack = cursorStack.slice(0, -1);
+    const cursor = newStack.length > 0 ? newStack[newStack.length - 1] : null;
+    loadPage(cursor, currentPage - 1, newStack);
+  }
 
   async function handleSearch() {
     setMode("search");
@@ -102,21 +130,13 @@ export default function InvoiceListComponent({
     }
   }
 
-  async function handleBackToRecent() {
+  function handleBackToRecent() {
     setMode("recent");
     setSearchText("");
     setStatusFilter("All");
     setDateFrom("");
     setDateTo("");
-    setLoadStatus("loading");
-    try {
-      const list = await onLoadRecentInvoices(50);
-      setInvoices(Array.isArray(list) ? list : []);
-      setLoadStatus("loaded");
-    } catch (err) {
-      console.error(err);
-      setLoadStatus("error");
-    }
+    loadPage(null, 1, []);
   }
 
   const displayedInvoices = useMemo(() => {
@@ -293,6 +313,16 @@ export default function InvoiceListComponent({
             </table>
           )}
         </div>
+        {mode === "recent" && (
+          <Pagination
+            currentPage={currentPage}
+            hasMore={hasMore}
+            onPrev={handlePrev}
+            onNext={handleNext}
+            loading={pageLoading}
+            totalOnPage={invoices.length}
+          />
+        )}
       </div>
 
       {/* ============ VIEW / REPRINT OVERLAY ============ */}

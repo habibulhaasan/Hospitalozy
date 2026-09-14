@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import Pagination from "@/components/shared/Pagination";
 import { REPORTABLE_PARAMETERS as TEST_CATALOG } from "@/data/reportableParameters";
 
 /* TEST_CATALOG now imported from the same shared file
@@ -115,12 +116,19 @@ export default function LabReportListComponent({
   onLoadDoctors = async () => [],
   onLoadTechnologists = async () => [],
   onLoadPathologists = async () => [],
+  onLoadReportsPage = async () => ({}),
   hospitalName: fallbackHospitalName = "Upazila Health Complex",
   hospitalAddress: fallbackHospitalAddress = "",
 } = {}) {
   const [reports, setReports] = useState([]);
   const [loadStatus, setLoadStatus] = useState("loading"); // "loading" | "loaded" | "error"
   const [mode, setMode] = useState("recent"); // "recent" | "search"
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [cursorStack, setCursorStack] = useState([]);
+  const [lastRawDoc, setLastRawDoc] = useState(null);
+  const [pageLoading, setPageLoading] = useState(false);
 
   const [searchText, setSearchText] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -138,14 +146,37 @@ export default function LabReportListComponent({
     onLoadTechnologists().then(setTechnologistOptions).catch(() => {});
     onLoadPathologists().then(setPathologistOptions).catch(() => {});
     
-    onLoadRecentReports(50)
-      .then((list) => {
-        setReports(Array.isArray(list) ? list : []);
-        setLoadStatus("loaded");
-      })
-      .catch(() => setLoadStatus("error"));
+    loadPage(null, 1, []);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function loadPage(cursor, pageNum, stack) {
+    setPageLoading(true);
+    if (reports.length === 0) setLoadStatus("loading");
+    try {
+      const result = await onLoadReportsPage({ cursor });
+      setReports(result.data);
+      setHasMore(result.hasMore);
+      setCurrentPage(pageNum);
+      setCursorStack(stack);
+      setLastRawDoc(result.lastDoc);
+      setLoadStatus("loaded");
+    } catch {
+      setLoadStatus("error");
+    } finally {
+      setPageLoading(false);
+    }
+  }
+
+  function handleNext() {
+    loadPage(lastRawDoc, currentPage + 1, [...cursorStack, lastRawDoc]);
+  }
+
+  function handlePrev() {
+    const newStack = cursorStack.slice(0, -1);
+    const cursor = newStack.length > 0 ? newStack[newStack.length - 1] : null;
+    loadPage(cursor, currentPage - 1, newStack);
+  }
 
   async function handleSearch() {
     setMode("search");
@@ -164,20 +195,12 @@ export default function LabReportListComponent({
     }
   }
 
-  async function handleBackToRecent() {
+  function handleBackToRecent() {
     setMode("recent");
     setSearchText("");
     setDateFrom("");
     setDateTo("");
-    setLoadStatus("loading");
-    try {
-      const list = await onLoadRecentReports(50);
-      setReports(Array.isArray(list) ? list : []);
-      setLoadStatus("loaded");
-    } catch (err) {
-      console.error(err);
-      setLoadStatus("error");
-    }
+    loadPage(null, 1, []);
   }
 
   async function handlePrint() {
@@ -374,6 +397,16 @@ export default function LabReportListComponent({
             </table>
           )}
         </div>
+        {mode === "recent" && (
+          <Pagination
+            currentPage={currentPage}
+            hasMore={hasMore}
+            onPrev={handlePrev}
+            onNext={handleNext}
+            loading={pageLoading}
+            totalOnPage={reports.length}
+          />
+        )}
       </div>
 
       {/* ============ MODAL FOR REPRINT ============ */}
