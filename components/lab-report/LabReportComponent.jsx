@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { REPORTABLE_PARAMETERS as TEST_CATALOG } from "@/data/reportableParameters";
+import { BILLABLE_BY_NAME } from "@/data/billableItems";
 import AsyncSearchableSelect from "@/components/shared/AsyncSearchableSelect";
 import SearchableSelect from "@/components/shared/SearchableSelect";
 
@@ -166,6 +167,7 @@ export default function LabReportComponent({
   onLoadDoctors = async () => [],
   onLoadTechnologists = async () => [],
   onLoadPathologists = async () => [],
+  onLoadAppConfig = async () => ({ showManualTestSelector: false }),
 } = {}) {
   const [patient, setPatient] = useState(initialReport?.patient || DEFAULT_PATIENT);
   const [hospitalName, setHospitalName] = useState(initialReport?.hospitalName || "Upazila Health Complex");
@@ -186,11 +188,17 @@ export default function LabReportComponent({
   const [confirmingReset, setConfirmingReset] = useState(false);
   const [billingSource, setBillingSource]               = useState("invoice"); // "invoice" | "ticket" | "both"
   const [billingSearchAllRecords, setBillingSearchAllRecords] = useState(false);
+  const [showManualTestSelector, setShowManualTestSelector] = useState(false);
+  const [showExtraPageSelector, setShowExtraPageSelector] = useState(false);
 
   useEffect(() => {
     onLoadDoctors().then(setDoctorOptions).catch(() => {});
     onLoadTechnologists().then(setTechnologistOptions).catch(() => {});
     onLoadPathologists().then(setPathologistOptions).catch(() => {});
+    onLoadAppConfig().then(cfg => {
+      setShowManualTestSelector(cfg?.showManualTestSelector || false);
+      setShowExtraPageSelector(cfg?.showExtraPageSelector || false);
+    }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -332,6 +340,7 @@ export default function LabReportComponent({
       item.ageM && `${item.ageM}M`,
       item.ageD && `${item.ageD}D`,
     ].filter(Boolean);
+    
     setPatient((prev) => ({
       ...prev,
       regNo: item.patientId || prev.regNo,
@@ -342,6 +351,35 @@ export default function LabReportComponent({
       collectionDate: item.collectionDate || prev.collectionDate,
     }));
     setLookupStatus("found");
+
+    // Auto-populate tests from the invoice/ticket line items
+    if (item.lineItems && item.lineItems.length > 0) {
+      setSelected((prev) => {
+        const existingNames = new Set(prev.map((s) => s.name));
+        const additions = [];
+
+        item.lineItems.forEach((li) => {
+          const billable = BILLABLE_BY_NAME[li.name];
+          if (billable && billable.reportParameters && billable.reportParameters.length > 0) {
+            billable.reportParameters.forEach((paramName) => {
+              if (!existingNames.has(paramName)) {
+                existingNames.add(paramName);
+                additions.push({ name: paramName, result: "" });
+              }
+            });
+          } else {
+            // Fallback: if it has no reportParameters but exactly matches a test in catalog
+            const inCatalog = TEST_CATALOG.some((t) => t.name === li.name);
+            if (inCatalog && !existingNames.has(li.name)) {
+              existingNames.add(li.name);
+              additions.push({ name: li.name, result: "" });
+            }
+          }
+        });
+
+        return [...prev, ...additions];
+      });
+    }
   }
 
   function handleBillingSourceSearch(text) {
@@ -632,72 +670,74 @@ export default function LabReportComponent({
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">
-            Add Tests to Report
-          </h2>
-          <input
-            className="border rounded px-2 py-1.5 text-sm w-full mb-3"
-            placeholder="Search a test by name…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          {!search && (
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              {TAB_CATEGORIES.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setActiveCat(c)}
-                  className={`text-xs px-2.5 py-1 rounded-full border ${
-                    activeCat === c
-                      ? "bg-slate-800 text-white border-slate-800"
-                      : "bg-white text-slate-600 border-slate-300"
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          )}
-          {!search && activeCat === "General" && (
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              <button
-                onClick={() => addPanel("CBC")}
-                className="text-xs px-2.5 py-1 rounded-full border bg-amber-50 border-amber-300 text-amber-800 font-medium"
-              >
-                + Add CBC Panel (14 tests)
-              </button>
-              <button
-                onClick={() => addPanel("Urine R/M/E")}
-                className="text-xs px-2.5 py-1 rounded-full border bg-amber-50 border-amber-300 text-amber-800 font-medium"
-              >
-                + Add Urine R/M/E Panel ({PANELS["Urine R/M/E"].length} tests)
-              </button>
-            </div>
-          )}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-1.5 max-h-64 overflow-y-auto pr-1">
-            {filteredCatalog.map((t) => {
-              const isSel = selected.some((s) => s.name === t.name);
-              return (
-                <button
-                  key={t.name}
-                  onClick={() => toggleTest(t)}
-                  className={`text-left text-xs px-2 py-1.5 rounded border ${
-                    isSel
-                      ? "bg-emerald-50 border-emerald-400 text-emerald-800"
-                      : "bg-slate-50 border-slate-200 text-slate-700"
-                  }`}
-                >
-                  {isSel ? "✓ " : "+ "}
-                  {t.name}
-                </button>
-              );
-            })}
-            {filteredCatalog.length === 0 && (
-              <div className="text-xs text-slate-400 col-span-full">No matching test.</div>
+        {showManualTestSelector && (
+          <div className="bg-white rounded-lg border border-slate-200 p-4">
+            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">
+              Add Tests to Report
+            </h2>
+            <input
+              className="border rounded px-2 py-1.5 text-sm w-full mb-3"
+              placeholder="Search a test by name…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {!search && (
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {TAB_CATEGORIES.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setActiveCat(c)}
+                    className={`text-xs px-2.5 py-1 rounded-full border ${
+                      activeCat === c
+                        ? "bg-slate-800 text-white border-slate-800"
+                        : "bg-white text-slate-600 border-slate-300"
+                    }`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
             )}
+            {!search && activeCat === "General" && (
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                <button
+                  onClick={() => addPanel("CBC")}
+                  className="text-xs px-2.5 py-1 rounded-full border bg-amber-50 border-amber-300 text-amber-800 font-medium"
+                >
+                  + Add CBC Panel (14 tests)
+                </button>
+                <button
+                  onClick={() => addPanel("Urine R/M/E")}
+                  className="text-xs px-2.5 py-1 rounded-full border bg-amber-50 border-amber-300 text-amber-800 font-medium"
+                >
+                  + Add Urine R/M/E Panel ({PANELS["Urine R/M/E"].length} tests)
+                </button>
+              </div>
+            )}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-1.5 max-h-64 overflow-y-auto pr-1">
+              {filteredCatalog.map((t) => {
+                const isSel = selected.some((s) => s.name === t.name);
+                return (
+                  <button
+                    key={t.name}
+                    onClick={() => toggleTest(t)}
+                    className={`text-left text-xs px-2 py-1.5 rounded border ${
+                      isSel
+                        ? "bg-emerald-50 border-emerald-400 text-emerald-800"
+                        : "bg-slate-50 border-slate-200 text-slate-700"
+                    }`}
+                  >
+                    {isSel ? "✓ " : "+ "}
+                    {t.name}
+                  </button>
+                );
+              })}
+              {filteredCatalog.length === 0 && (
+                <div className="text-xs text-slate-400 col-span-full">No matching test.</div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="bg-white rounded-lg border border-slate-200 p-3 flex items-center justify-between">
           <span className="text-xs text-slate-500">
@@ -724,12 +764,14 @@ export default function LabReportComponent({
                 Reset Report
               </button>
             )}
-            <button
-              onClick={addExtraPage}
-              className="text-sm bg-white border border-slate-300 text-slate-600 px-3 py-1.5 rounded"
-            >
-              + Add Extra Page
-            </button>
+            {showExtraPageSelector && (
+              <button
+                onClick={addExtraPage}
+                className="text-sm bg-white border border-slate-300 text-slate-600 px-3 py-1.5 rounded"
+              >
+                + Add Extra Page
+              </button>
+            )}
             <button
               onClick={handleSaveReport}
               disabled={(selected.length === 0 && extraPages.length === 0) || saveStatus === "saving"}

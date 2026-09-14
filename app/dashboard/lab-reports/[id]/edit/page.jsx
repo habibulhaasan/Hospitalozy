@@ -9,6 +9,7 @@ import { loadActiveDoctorNames, loadActivePathologistNames } from "@/lib/firesto
 import { loadMedicalTechnologistNames } from "@/lib/firestore/employees";
 import { saveReport, lookupInvoiceForPatient, loadReportById } from "@/lib/firestore/reports";
 import { searchBillingSources } from "@/lib/firestore/billingSources";
+import { loadAppConfig } from "@/lib/firestore/settings";
 
 export default function EditLabReportPage({ params }) {
   const router = useRouter();
@@ -66,6 +67,7 @@ export default function EditLabReportPage({ params }) {
         onLoadDoctors={loadActiveDoctorNames}
         onLoadTechnologists={loadMedicalTechnologistNames}
         onLoadPathologists={loadActivePathologistNames}
+        onLoadAppConfig={loadAppConfig}
       />
     </PermissionGate>
   );

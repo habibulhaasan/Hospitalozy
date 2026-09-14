@@ -18,6 +18,7 @@ import { loadActiveDoctorNames, loadActivePathologistNames } from "@/lib/firesto
 import { loadMedicalTechnologistNames } from "@/lib/firestore/employees";
 import { saveReport, lookupInvoiceForPatient } from "@/lib/firestore/reports";
 import { searchBillingSources } from "@/lib/firestore/billingSources";
+import { loadAppConfig } from "@/lib/firestore/settings";
 
 export default function NewLabReportPage() {
   return (
@@ -30,6 +31,7 @@ export default function NewLabReportPage() {
         onLoadDoctors={loadActiveDoctorNames}
         onLoadTechnologists={loadMedicalTechnologistNames}
         onLoadPathologists={loadActivePathologistNames}
+        onLoadAppConfig={loadAppConfig}
       />
     </PermissionGate>
   );
