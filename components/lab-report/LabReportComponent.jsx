@@ -184,6 +184,7 @@ export default function LabReportComponent({
   const [lookupStatus, setLookupStatus] = useState(""); // "", "loading", "found", "not-found", "error"
   const [saveStatus, setSaveStatus] = useState(""); // "", "saving", "saved", "error"
   const [confirmingReset, setConfirmingReset] = useState(false);
+  const [billingSearchAllRecords, setBillingSearchAllRecords] = useState(false);
 
   useEffect(() => {
     onLoadDoctors().then(setDoctorOptions).catch(() => {});
@@ -342,6 +343,15 @@ export default function LabReportComponent({
     setLookupStatus("found");
   }
 
+  function handleBillingSourceSearch(text) {
+    // When allRecords mode is on, pass a far-past dateFrom to bypass
+    // the 90-day window in searchBillingSources().
+    if (billingSearchAllRecords) {
+      return onSearchBillingSource(text, { dateFrom: "2000-01-01" });
+    }
+    return onSearchBillingSource(text);
+  }
+
   async function handleSaveReport() {
     setSaveStatus("saving");
     try {
@@ -426,14 +436,31 @@ export default function LabReportComponent({
             )}
           </div>
           <div className="mb-3">
-            <label className="text-xs text-slate-500 block mb-1">
-              Find Patient via Invoice No. or OPD Ticket No.
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs text-slate-500">
+                Find Patient via Invoice No. or OPD Ticket No.
+              </label>
+              <button
+                type="button"
+                onClick={() => setBillingSearchAllRecords((v) => !v)}
+                className={`text-[10px] underline underline-offset-2 transition-colors ${
+                  billingSearchAllRecords
+                    ? "text-amber-600 font-medium"
+                    : "text-slate-400 hover:text-slate-600"
+                }`}
+              >
+                {billingSearchAllRecords ? "Searching all records" : "Can't find it? Search all records"}
+              </button>
+            </div>
             <AsyncSearchableSelect
-              onSearch={onSearchBillingSource}
+              onSearch={handleBillingSourceSearch}
               onSelect={handleSelectBillingSource}
               placeholder="Search by Invoice No., Ticket No., patient name, or mobile…"
-              emptyHint="No matching invoice or OPD ticket found."
+              emptyHint={
+                billingSearchAllRecords
+                  ? "No matching invoice or OPD ticket found in all records."
+                  : 'No match in last 90 days. Try "Search all records" above.'
+              }
               renderItem={(item) => (
                 <div className="flex justify-between gap-2">
                   <span>
@@ -443,9 +470,16 @@ export default function LabReportComponent({
                 </div>
               )}
             />
-            <p className="text-[10px] text-slate-400 mt-1">
-              Or enter the Reg / Patient ID directly below if you already know it.
-            </p>
+            {billingSearchAllRecords && (
+              <p className="text-[10px] text-amber-600 mt-1">
+                ⚠ Searching all records — this may be slower for older data.
+              </p>
+            )}
+            {!billingSearchAllRecords && (
+              <p className="text-[10px] text-slate-400 mt-1">
+                Searching last 90 days · Or enter the Reg / Patient ID directly below.
+              </p>
+            )}
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <input
