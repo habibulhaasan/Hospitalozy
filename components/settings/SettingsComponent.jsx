@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useQuickAccess } from "@/hooks/useQuickAccess";
 
 const AVAILABLE_LINKS = [
+  { href: "/dashboard/patient-tickets/new", label: "New Ticket" },
   { href: "/dashboard/invoices/new", label: "New Invoice" },
   { href: "/dashboard/lab-reports/new", label: "New Report" },
   { href: "/dashboard/patients", label: "Patients" },
@@ -21,7 +22,7 @@ export default function SettingsComponent({
   const [hasLoaded, setHasLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState("quick-access");
 
-  const [appConfig, setAppConfig] = useState({ showManualTestSelector: false });
+  const [appConfig, setAppConfig] = useState({ showManualTestSelector: false, showExtraPageSelector: false, hiddenNavItems: [] });
   const [configSaving, setConfigSaving] = useState(false);
 
   // Initialize selectedLinks when quickAccessLinks load
@@ -83,13 +84,23 @@ export default function SettingsComponent({
         </button>
         <button
           className={`px-4 py-2 text-sm font-medium border-b-2 ${
+            activeTab === "navigation"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+          }`}
+          onClick={() => setActiveTab("navigation")}
+        >
+          Navigation Configuration
+        </button>
+        <button
+          className={`px-4 py-2 text-sm font-medium border-b-2 ${
             activeTab === "global"
               ? "border-blue-600 text-blue-600"
               : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
           }`}
           onClick={() => setActiveTab("global")}
         >
-          Global Configuration
+          Lab Configuration
         </button>
       </div>
 
@@ -123,6 +134,60 @@ export default function SettingsComponent({
                 className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded text-sm font-medium transition-colors shadow-sm"
               >
                 Save Preferences
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "navigation" && (
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+          <div className="p-5 border-b border-slate-100">
+            <h2 className="text-sm font-semibold text-slate-800">Sidebar Navigation</h2>
+            <p className="text-xs text-slate-500 mt-1">
+              Choose which items are globally visible in the sidebar navigation. (Requires page refresh to take effect).
+            </p>
+          </div>
+
+          <div className="p-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[
+                "Dashboard", "Patient List", "New Ticket", "Ticket History",
+                "New Invoice", "Invoice History", "Commissions", "Accounting",
+                "New Report", "Report History", "Doctors", "Agents",
+                "Employees", "Test Master", "Settings"
+              ].map(label => {
+                const isHidden = (appConfig.hiddenNavItems || []).includes(label);
+                return (
+                  <label key={label} className="flex items-center gap-3 p-3 border border-slate-200 rounded hover:bg-slate-50 cursor-pointer transition-colors">
+                    <input 
+                      type="checkbox" 
+                      checked={!isHidden}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setAppConfig(prev => {
+                          const currentHidden = prev.hiddenNavItems || [];
+                          const newHidden = checked 
+                            ? currentHidden.filter(l => l !== label) 
+                            : [...currentHidden, label];
+                          return { ...prev, hiddenNavItems: newHidden };
+                        });
+                      }}
+                      className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-slate-700 font-medium">{label}</span>
+                  </label>
+                );
+              })}
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button 
+                onClick={handleSaveAppConfig}
+                disabled={configSaving}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-5 py-2 rounded text-sm font-medium transition-colors shadow-sm"
+              >
+                {configSaving ? "Saving..." : "Save Configuration"}
               </button>
             </div>
           </div>

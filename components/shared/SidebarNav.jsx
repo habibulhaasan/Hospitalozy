@@ -23,6 +23,8 @@ const NAV_GROUPS = [
     label: "Billing",
     module: "billing",
     items: [
+      { href: "/dashboard/patient-tickets/new", label: "New Ticket", icon: Receipt },
+      { href: "/dashboard/patient-tickets", label: "Ticket History", exact: true, icon: History },
       { href: "/dashboard/invoices/new", label: "New Invoice", icon: Receipt },
       { href: "/dashboard/invoices", label: "Invoice History", exact: true, icon: History },
       { href: "/dashboard/commissions", label: "Commissions", icon: HandCoins },
@@ -59,6 +61,18 @@ export default function SidebarNav({ isCollapsed, onToggleCollapse }) {
     "Laboratory": true,
     "Administration": true,
   });
+
+  const [hiddenItems, setHiddenItems] = useState([]);
+
+  React.useEffect(() => {
+    import("@/lib/firestore/settings").then(mod => {
+      mod.loadAppConfig().then(cfg => {
+        if (cfg?.hiddenNavItems) {
+          setHiddenItems(cfg.hiddenNavItems);
+        }
+      });
+    });
+  }, []);
 
   const toggleGroup = (label) => {
     if (isCollapsed) {
@@ -103,7 +117,10 @@ export default function SidebarNav({ isCollapsed, onToggleCollapse }) {
             
           if (!hasGroupAccess) return null;
 
-          const visibleItems = group.items.filter(item => item.module ? permissions[item.module] : true);
+          const visibleItems = group.items.filter(item => {
+            if (hiddenItems.includes(item.label)) return false;
+            return item.module ? permissions[item.module] : true;
+          });
           if (visibleItems.length === 0) return null;
 
           const isOpen = openGroups[group.label];
