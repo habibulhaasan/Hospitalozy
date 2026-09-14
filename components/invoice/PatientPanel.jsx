@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 /**
  * components/invoice/PatientPanel.jsx
@@ -99,21 +99,24 @@ export default function PatientPanel({
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <input
-          className="border rounded px-2 py-1.5 text-sm col-span-2"
+          className="border rounded px-2 py-1.5 text-sm col-span-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
           placeholder="Patient name"
           value={patient.name}
           onChange={(e) => setPatient({ ...patient, name: e.target.value })}
+          disabled={patientMode === "existing" && lookupStatus === "found"}
         />
         <input
-          className="border rounded px-2 py-1.5 text-sm"
+          className="border rounded px-2 py-1.5 text-sm disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
           placeholder="Mobile number"
           value={patient.mobile}
           onChange={(e) => setPatient({ ...patient, mobile: e.target.value })}
+          disabled={patientMode === "existing" && lookupStatus === "found"}
         />
         <select
-          className="border rounded px-2 py-1.5 text-sm"
+          className="border rounded px-2 py-1.5 text-sm disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
           value={patient.gender}
           onChange={(e) => setPatient({ ...patient, gender: e.target.value })}
+          disabled={patientMode === "existing" && lookupStatus === "found"}
         >
           <option>Male</option>
           <option>Female</option>
@@ -124,47 +127,53 @@ export default function PatientPanel({
           <label className="text-[10px] text-slate-400 block mb-0.5">DOB (optional)</label>
           <input
             type="date"
-            className="border rounded px-2 py-1.5 text-sm w-full"
+            className="border rounded px-2 py-1.5 text-sm w-full disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
             value={patient.dob}
             onChange={(e) => setPatient({ ...patient, dob: e.target.value })}
+            disabled={patientMode === "existing" && lookupStatus === "found"}
           />
         </div>
         <div className="col-span-2 md:col-span-2">
           <label className="text-[10px] text-slate-400 block mb-0.5">Age (auto-filled from DOB, or enter manually)</label>
           <div className="flex gap-1.5">
             <input
-              className="border rounded px-2 py-1.5 text-sm w-full"
+              className="border rounded px-2 py-1.5 text-sm w-full disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
               placeholder="Y"
               value={patient.ageY}
               onChange={(e) => setPatient({ ...patient, ageY: e.target.value })}
+              disabled={patientMode === "existing" && lookupStatus === "found"}
             />
             <input
-              className="border rounded px-2 py-1.5 text-sm w-full"
+              className="border rounded px-2 py-1.5 text-sm w-full disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
               placeholder="M"
               value={patient.ageM}
               onChange={(e) => setPatient({ ...patient, ageM: e.target.value })}
+              disabled={patientMode === "existing" && lookupStatus === "found"}
             />
             <input
-              className="border rounded px-2 py-1.5 text-sm w-full"
+              className="border rounded px-2 py-1.5 text-sm w-full disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
               placeholder="D"
               value={patient.ageD}
               onChange={(e) => setPatient({ ...patient, ageD: e.target.value })}
+              disabled={patientMode === "existing" && lookupStatus === "found"}
             />
           </div>
         </div>
         <input
-          className="border rounded px-2 py-1.5 text-sm"
+          className="border rounded px-2 py-1.5 text-sm disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
           placeholder="NID / BRN (optional)"
           value={patient.nid}
           onChange={(e) => setPatient({ ...patient, nid: e.target.value })}
+          disabled={patientMode === "existing" && lookupStatus === "found"}
         />
 
         <textarea
-          className="border rounded px-2 py-1.5 text-sm col-span-2 md:col-span-3"
+          className="border rounded px-2 py-1.5 text-sm col-span-2 md:col-span-3 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
           placeholder="Address"
           rows={1}
           value={patient.address}
           onChange={(e) => setPatient({ ...patient, address: e.target.value })}
+          disabled={patientMode === "existing" && lookupStatus === "found"}
         />
         <div>
           <SearchableSelect
@@ -184,7 +193,7 @@ export default function PatientPanel({
         )}
         <button
           onClick={onSavePatient}
-          disabled={!patient.name.trim() || savePatientStatus === "saving"}
+          disabled={!patient.name.trim() || savePatientStatus === "saving" || (patientMode === "existing" && lookupStatus === "found")}
           className="text-sm bg-slate-800 disabled:bg-slate-300 text-white px-3 py-1.5 rounded"
         >
           {savePatientStatus === "saving" ? "Saving…" : patient.patientId ? "Update Patient Info" : "Register Patient"}

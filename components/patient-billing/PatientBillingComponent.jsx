@@ -346,27 +346,27 @@ export default function PatientBillingComponent({
           )}
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <input className="border rounded px-2 py-1.5 text-sm col-span-2" placeholder="Patient name" value={patient.name} onChange={(e) => setPatient({ ...patient, name: e.target.value })} />
-            <input className="border rounded px-2 py-1.5 text-sm" placeholder="Mobile number" value={patient.mobile} onChange={(e) => setPatient({ ...patient, mobile: e.target.value })} />
-            <select className="border rounded px-2 py-1.5 text-sm" value={patient.gender} onChange={(e) => setPatient({ ...patient, gender: e.target.value })}>
+            <input className="border rounded px-2 py-1.5 text-sm col-span-2 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed" placeholder="Patient name" value={patient.name} onChange={(e) => setPatient({ ...patient, name: e.target.value })} disabled={patientMode === "existing" && lookupStatus === "found"} />
+            <input className="border rounded px-2 py-1.5 text-sm disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed" placeholder="Mobile number" value={patient.mobile} onChange={(e) => setPatient({ ...patient, mobile: e.target.value })} disabled={patientMode === "existing" && lookupStatus === "found"} />
+            <select className="border rounded px-2 py-1.5 text-sm disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed" value={patient.gender} onChange={(e) => setPatient({ ...patient, gender: e.target.value })} disabled={patientMode === "existing" && lookupStatus === "found"}>
               <option>Male</option>
               <option>Female</option>
               <option>Other</option>
             </select>
             <div className="col-span-2 md:col-span-1">
               <label className="text-[10px] text-gray-400 block mb-0.5">DOB (optional)</label>
-              <input type="date" className="border rounded px-2 py-1.5 text-sm w-full" value={patient.dob} onChange={(e) => setPatient({ ...patient, dob: e.target.value })} />
+              <input type="date" className="border rounded px-2 py-1.5 text-sm w-full disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed" value={patient.dob} onChange={(e) => setPatient({ ...patient, dob: e.target.value })} disabled={patientMode === "existing" && lookupStatus === "found"} />
             </div>
             <div className="col-span-2 md:col-span-2">
               <label className="text-[10px] text-gray-400 block mb-0.5">Age (auto from DOB, or manual)</label>
               <div className="flex gap-1.5">
-                <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Y" value={patient.ageY} onChange={(e) => setPatient({ ...patient, ageY: e.target.value })} />
-                <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="M" value={patient.ageM} onChange={(e) => setPatient({ ...patient, ageM: e.target.value })} />
-                <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="D" value={patient.ageD} onChange={(e) => setPatient({ ...patient, ageD: e.target.value })} />
+                <input className="border rounded px-2 py-1.5 text-sm w-full disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed" placeholder="Y" value={patient.ageY} onChange={(e) => setPatient({ ...patient, ageY: e.target.value })} disabled={patientMode === "existing" && lookupStatus === "found"} />
+                <input className="border rounded px-2 py-1.5 text-sm w-full disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed" placeholder="M" value={patient.ageM} onChange={(e) => setPatient({ ...patient, ageM: e.target.value })} disabled={patientMode === "existing" && lookupStatus === "found"} />
+                <input className="border rounded px-2 py-1.5 text-sm w-full disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed" placeholder="D" value={patient.ageD} onChange={(e) => setPatient({ ...patient, ageD: e.target.value })} disabled={patientMode === "existing" && lookupStatus === "found"} />
               </div>
             </div>
-            <input className="border rounded px-2 py-1.5 text-sm" placeholder="NID / BRN (optional)" value={patient.nid} onChange={(e) => setPatient({ ...patient, nid: e.target.value })} />
-            <textarea className="border rounded px-2 py-1.5 text-sm col-span-2 md:col-span-3" placeholder="Address" rows={1} value={patient.address} onChange={(e) => setPatient({ ...patient, address: e.target.value })} />
+            <input className="border rounded px-2 py-1.5 text-sm disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed" placeholder="NID / BRN (optional)" value={patient.nid} onChange={(e) => setPatient({ ...patient, nid: e.target.value })} disabled={patientMode === "existing" && lookupStatus === "found"} />
+            <textarea className="border rounded px-2 py-1.5 text-sm col-span-2 md:col-span-3 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed" placeholder="Address" rows={1} value={patient.address} onChange={(e) => setPatient({ ...patient, address: e.target.value })} disabled={patientMode === "existing" && lookupStatus === "found"} />
             <div>
               <SearchableSelect value={patient.referredBy} onChange={(v) => setPatient({ ...patient, referredBy: v })} options={doctorOptions} placeholder="Referred by (doctor)" />
             </div>
@@ -374,7 +374,7 @@ export default function PatientBillingComponent({
 
           <div className="flex items-center gap-2 mt-3">
             {patient.patientId && <span className="text-xs bg-gray-100 border border-gray-300 rounded px-2 py-1">Patient ID: <b>{patient.patientId}</b></span>}
-            <button onClick={handleSavePatient} disabled={!patient.name.trim() || savePatientStatus === "saving"} className="text-sm bg-gray-800 disabled:bg-gray-300 text-white px-3 py-1.5 rounded">
+            <button onClick={handleSavePatient} disabled={!patient.name.trim() || savePatientStatus === "saving" || (patientMode === "existing" && lookupStatus === "found")} className="text-sm bg-gray-800 disabled:bg-gray-300 text-white px-3 py-1.5 rounded">
               {savePatientStatus === "saving" ? "Saving…" : patient.patientId ? "Update Patient Info" : "Register Patient"}
             </button>
             {savePatientStatus === "saved" && <span className="text-xs text-emerald-600">Saved ✓</span>}
