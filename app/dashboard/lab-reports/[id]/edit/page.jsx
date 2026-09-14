@@ -18,9 +18,26 @@ export default function EditLabReportPage({ params }) {
   const [initialReport, setInitialReport] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const { employee } = require("@/context/AuthContext").useAuth();
+
   useEffect(() => {
-    loadReportById(reportId)
-      .then((data) => {
+    Promise.all([
+      loadReportById(reportId),
+      loadAppConfig()
+    ])
+      .then(([data, config]) => {
+        const canEdit = config?.technologistCanEditReports ?? true;
+        const isTechnologist = employee && employee.role !== "Admin" && (
+          employee.designation === "Medical Technologist (Laboratory)" ||
+          employee.designation === "Medical Technologist" ||
+          employee.department === "Pathology"
+        );
+
+        if (isTechnologist && !canEdit) {
+          router.replace("/dashboard/lab-reports");
+          return;
+        }
+
         setInitialReport(data);
         setLoading(false);
       })
@@ -28,7 +45,7 @@ export default function EditLabReportPage({ params }) {
         console.error("Failed to load report", err);
         setLoading(false);
       });
-  }, [reportId]);
+  }, [reportId, employee, router]);
 
   if (loading) {
     return (

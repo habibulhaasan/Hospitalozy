@@ -22,7 +22,12 @@ export default function SettingsComponent({
   const [hasLoaded, setHasLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState("quick-access");
 
-  const [appConfig, setAppConfig] = useState({ showManualTestSelector: false, showExtraPageSelector: false, hiddenNavItems: [] });
+  const [appConfig, setAppConfig] = useState({ 
+    showManualTestSelector: false, 
+    showExtraPageSelector: false, 
+    technologistCanEditReports: true,
+    hiddenNavItems: [] 
+  });
   const [configSaving, setConfigSaving] = useState(false);
 
   // Initialize selectedLinks when quickAccessLinks load
@@ -228,6 +233,19 @@ export default function SettingsComponent({
                 <div className="flex flex-col">
                   <span className="text-sm text-slate-700 font-medium">Show extra page selector</span>
                   <span className="text-xs text-slate-500">If unchecked, the "+ Add Extra Page" button will be hidden from technologists, preventing manual creation of free-text pages.</span>
+                </div>
+              </label>
+
+              <label className="flex items-center gap-3 p-3 border border-slate-200 rounded hover:bg-slate-50 cursor-pointer transition-colors">
+                <input 
+                  type="checkbox" 
+                  checked={appConfig.technologistCanEditReports ?? true}
+                  onChange={(e) => setAppConfig(prev => ({ ...prev, technologistCanEditReports: e.target.checked }))}
+                  className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                />
+                <div className="flex flex-col">
+                  <span className="text-sm text-slate-700 font-medium">Technologists can edit reports</span>
+                  <span className="text-xs text-slate-500">If unchecked, technologists will not see the "Edit" button for any report. Only Admins or designated roles will be able to edit them.</span>
                 </div>
               </label>
             </div>

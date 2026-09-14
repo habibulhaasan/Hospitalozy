@@ -141,7 +141,17 @@ export default function LabReportListComponent({
   const [pathologistOptions, setPathologistOptions] = useState([]);
   const [doctorOptions, setDoctorOptions] = useState([]);
 
+  // Added for role checks
+  const { employee } = require("@/context/AuthContext").useAuth();
+  const [technologistCanEditReports, setTechnologistCanEditReports] = useState(true);
+
   useEffect(() => {
+    import("@/lib/firestore/settings").then(mod => {
+      mod.loadAppConfig().then(cfg => {
+        if (cfg) setTechnologistCanEditReports(cfg.technologistCanEditReports ?? true);
+      });
+    });
+
     onLoadDoctors().then(setDoctorOptions).catch(() => {});
     onLoadTechnologists().then(setTechnologistOptions).catch(() => {});
     onLoadPathologists().then(setPathologistOptions).catch(() => {});
@@ -321,41 +331,55 @@ export default function LabReportListComponent({
                     <td className="py-2 px-3">{rep.technologist || "—"}</td>
                     <td className="py-2 px-3">
                       <div className="flex items-center gap-1">
-                        <select 
-                          className={`text-[10px] px-2 py-1 rounded-full font-semibold border-0 outline-none cursor-pointer ${
-                            STATUS_STYLE[pendingStatuses[rep.id] ?? rep.status ?? "Completed"] || "bg-slate-100 text-slate-600"
-                          }`}
-                          style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', textAlign: 'center' }}
-                          title="Click to change status"
-                          value={pendingStatuses[rep.id] ?? rep.status ?? "Completed"}
-                          onChange={(e) => {
-                            const newStatus = e.target.value;
-                            setPendingStatuses(prev => ({ ...prev, [rep.id]: newStatus }));
-                          }}
-                        >
-                          <option value="Draft">Draft</option>
-                          <option value="Pending">Pending</option>
-                          <option value="Completed">Completed</option>
-                          <option value="Delivered">Delivered</option>
-                        </select>
-                        {pendingStatuses[rep.id] && pendingStatuses[rep.id] !== (rep.status ?? "Completed") && (
-                          <button 
-                            onClick={async () => {
-                              const newStatus = pendingStatuses[rep.id];
-                              if (onUpdateStatus) {
-                                await onUpdateStatus(rep.id, newStatus);
-                                setReports(reports.map(r => r.id === rep.id ? { ...r, status: newStatus } : r));
-                                setPendingStatuses(prev => {
-                                  const next = { ...prev };
-                                  delete next[rep.id];
-                                  return next;
-                                });
-                              }
-                            }}
-                            className="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-medium ml-1"
-                          >
-                            Save
-                          </button>
+                        {(!technologistCanEditReports && employee && employee.role !== "Admin" && (
+                          employee.designation === "Medical Technologist (Laboratory)" ||
+                          employee.designation === "Medical Technologist" ||
+                          employee.department === "Pathology"
+                        )) ? (
+                          <span className={`text-[10px] px-2 py-1 rounded-full font-semibold ${
+                            STATUS_STYLE[rep.status ?? "Completed"] || "bg-slate-100 text-slate-600"
+                          }`}>
+                            {rep.status ?? "Completed"}
+                          </span>
+                        ) : (
+                          <>
+                            <select 
+                              className={`text-[10px] px-2 py-1 rounded-full font-semibold border-0 outline-none cursor-pointer ${
+                                STATUS_STYLE[pendingStatuses[rep.id] ?? rep.status ?? "Completed"] || "bg-slate-100 text-slate-600"
+                              }`}
+                              style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', textAlign: 'center' }}
+                              title="Click to change status"
+                              value={pendingStatuses[rep.id] ?? rep.status ?? "Completed"}
+                              onChange={(e) => {
+                                const newStatus = e.target.value;
+                                setPendingStatuses(prev => ({ ...prev, [rep.id]: newStatus }));
+                              }}
+                            >
+                              <option value="Draft">Draft</option>
+                              <option value="Pending">Pending</option>
+                              <option value="Completed">Completed</option>
+                              <option value="Delivered">Delivered</option>
+                            </select>
+                            {pendingStatuses[rep.id] && pendingStatuses[rep.id] !== (rep.status ?? "Completed") && (
+                              <button 
+                                onClick={async () => {
+                                  const newStatus = pendingStatuses[rep.id];
+                                  if (onUpdateStatus) {
+                                    await onUpdateStatus(rep.id, newStatus);
+                                    setReports(reports.map(r => r.id === rep.id ? { ...r, status: newStatus } : r));
+                                    setPendingStatuses(prev => {
+                                      const next = { ...prev };
+                                      delete next[rep.id];
+                                      return next;
+                                    });
+                                  }
+                                }}
+                                className="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-medium ml-1"
+                              >
+                                Save
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     </td>
@@ -367,11 +391,15 @@ export default function LabReportListComponent({
                         <button onClick={() => setSelected(rep)} className="text-xs text-slate-600 hover:text-slate-900 underline">
                           View
                         </button>
-                        {rep.id && (
+                        {rep.id && (!technologistCanEditReports && employee && employee.role !== "Admin" && (
+                          employee.designation === "Medical Technologist (Laboratory)" ||
+                          employee.designation === "Medical Technologist" ||
+                          employee.department === "Pathology"
+                        ) ? null : (
                           <a href={`/dashboard/lab-reports/${rep.id}/edit`} className="text-xs text-blue-600 hover:text-blue-900 underline">
                             Edit
                           </a>
-                        )}
+                        ))}
                         <button 
                           onClick={() => {
                             setSelected(rep);
