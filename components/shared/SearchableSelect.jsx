@@ -14,7 +14,7 @@
  * ------------------------------------------------------------------ */
 import React, { useState, useMemo, useEffect, useRef } from "react";
 
-export default function SearchableSelect({ value, onChange, options, placeholder, emptyHint }) {
+export default function SearchableSelect({ value, onChange, options, placeholder, emptyHint, disabled = false }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
 
@@ -40,11 +40,13 @@ export default function SearchableSelect({ value, onChange, options, placeholder
   return (
     <div className="relative" ref={wrapRef}>
       <input
-        className="border rounded px-2 py-1.5 text-sm w-full"
+        className="border rounded px-2 py-1.5 text-sm w-full disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
         placeholder={placeholder}
         value={value}
-        onFocus={() => setOpen(true)}
+        disabled={disabled}
+        onFocus={() => { if (!disabled) setOpen(true); }}
         onChange={(e) => {
+          if (disabled) return;
           onChange(e.target.value);
           setOpen(true);
         }}

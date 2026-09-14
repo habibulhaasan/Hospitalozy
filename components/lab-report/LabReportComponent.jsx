@@ -576,31 +576,35 @@ export default function LabReportComponent({
               disabled={!showLetterhead}
             />
             <input
-              className="border rounded px-2 py-1.5 text-sm"
+              className="border rounded px-2 py-1.5 text-sm disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
               placeholder="Patient name"
               value={patient.name}
               onChange={(e) => setPatient({ ...patient, name: e.target.value })}
+              disabled={lookupStatus === "found"}
             />
             <input
-              className="border rounded px-2 py-1.5 text-sm"
+              className="border rounded px-2 py-1.5 text-sm disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
               placeholder="Age"
               value={patient.age}
               onChange={(e) => setPatient({ ...patient, age: e.target.value })}
+              disabled={lookupStatus === "found"}
             />
             <select
-              className="border rounded px-2 py-1.5 text-sm"
+              className="border rounded px-2 py-1.5 text-sm disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
               value={patient.sex}
               onChange={(e) => setPatient({ ...patient, sex: e.target.value })}
+              disabled={lookupStatus === "found"}
             >
               <option value="M">Male</option>
               <option value="F">Female</option>
             </select>
             <div className="flex gap-1.5">
               <input
-                className="border rounded px-2 py-1.5 text-sm flex-1"
+                className="border rounded px-2 py-1.5 text-sm flex-1 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
                 placeholder="Reg / Patient ID"
                 value={patient.regNo}
                 onChange={(e) => setPatient({ ...patient, regNo: e.target.value })}
+                disabled={lookupStatus === "found"}
               />
               <button
                 onClick={handleLookupPatient}
@@ -617,20 +621,23 @@ export default function LabReportComponent({
                 onChange={(v) => setPatient({ ...patient, referredBy: v })}
                 options={doctorOptions}
                 placeholder="Referred by (leave blank for Self)"
+                disabled={lookupStatus === "found"}
               />
             </div>
 
             <input
               type="date"
-              className="border rounded px-2 py-1.5 text-sm"
+              className="border rounded px-2 py-1.5 text-sm disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
               value={patient.collectionDate}
               onChange={(e) => setPatient({ ...patient, collectionDate: e.target.value })}
+              disabled={lookupStatus === "found"}
             />
             <input
               type="date"
-              className="border rounded px-2 py-1.5 text-sm"
+              className="border rounded px-2 py-1.5 text-sm disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
               value={patient.reportDate}
               onChange={(e) => setPatient({ ...patient, reportDate: e.target.value })}
+              disabled={lookupStatus === "found"}
             />
           </div>
           {lookupStatus === "found" && (
